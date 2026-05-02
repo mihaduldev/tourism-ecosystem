@@ -1,23 +1,48 @@
+"use client";
+
+import { useState, useMemo } from "react";
+import Link from "next/link";
 import { popularTours } from "@/lib/demo-data";
 import { Star, Clock, Users, MapPin, Calendar, Check, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function ToursPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredTours = useMemo(() => {
+    if (!searchQuery.trim()) return popularTours;
+    const q = searchQuery.toLowerCase();
+    return popularTours.filter(t => t.name.toLowerCase().includes(q));
+  }, [searchQuery]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Tour Packages</h1>
-          <p className="text-sm text-gray-500">{popularTours.length} packages available</p>
+          <p className="text-sm text-gray-500">{filteredTours.length} packages available</p>
         </div>
         <div className="relative w-full sm:w-64">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" placeholder="Search tours..." className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+          <input
+            type="text"
+            placeholder="Search tours..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
         </div>
       </div>
 
+      {filteredTours.length === 0 && (
+        <div className="text-center py-12">
+          <p className="text-gray-500 text-sm">No tours found matching "{searchQuery}"</p>
+          <button onClick={() => setSearchQuery("")} className="text-tour-600 text-sm font-medium mt-2 hover:underline">Clear search</button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {popularTours.map((tour) => (
+        {filteredTours.map((tour) => (
           <div key={tour.id} className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all group">
             {/* Image Area */}
             <div className="h-48 bg-gradient-to-br from-tour-100 to-tour-50 flex items-center justify-center text-6xl relative">
@@ -64,7 +89,7 @@ export default function ToursPage() {
                   <p className="text-xs text-gray-500">Starting from</p>
                   <p className="text-xl font-bold text-gray-900">৳{tour.priceFrom.toLocaleString()}<span className="text-xs font-normal text-gray-400">/person</span></p>
                 </div>
-                <Button size="sm" variant="primary">Book Now</Button>
+                <Link href="/checkout"><Button size="sm" variant="primary">Book Now</Button></Link>
               </div>
             </div>
           </div>

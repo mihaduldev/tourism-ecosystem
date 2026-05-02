@@ -3,8 +3,9 @@ import { featuredHotels, hotelRooms, hotelReviews } from "@/lib/demo-data";
 import { Star, MapPin, Wifi, ShieldCheck, Check, Heart, Share2, ArrowLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function HotelDetailPage({ params }: { params: { slug: string } }) {
-  const hotel = featuredHotels.find((h) => h.slug === params.slug) ?? featuredHotels[0];
+export default async function HotelDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const hotel = featuredHotels.find((h) => h.slug === slug) ?? featuredHotels[0];
 
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-6 py-6">
@@ -87,7 +88,7 @@ export default function HotelDetailPage({ params }: { params: { slug: string } }
                       <p className="text-xs text-gray-500">{room.available} available</p>
                       <p className="text-xl font-bold text-gray-900">৳{room.price.toLocaleString()}<span className="text-xs font-normal text-gray-400">/night</span></p>
                     </div>
-                    <Button size="sm" className="mt-0 sm:mt-2">Reserve</Button>
+                    <Link href="/checkout"><Button size="sm" className="mt-0 sm:mt-2">Reserve</Button></Link>
                   </div>
                 </div>
               ))}
@@ -148,7 +149,9 @@ export default function HotelDetailPage({ params }: { params: { slug: string } }
               <div className="flex justify-between border-t border-gray-100 pt-2 mt-2"><span className="font-bold text-gray-900">Total</span><span className="font-bold text-gray-900">৳{Math.round(hotel.priceFrom * 3 * 1.03).toLocaleString()}</span></div>
             </div>
 
-            <Button className="w-full py-3 text-sm">Reserve Now</Button>
+            <Link href="/checkout">
+              <Button className="w-full py-3 text-sm">Reserve Now</Button>
+            </Link>
             <p className="text-xs text-center text-gray-400">Free cancellation up to 24 hours before check-in</p>
           </div>
         </div>

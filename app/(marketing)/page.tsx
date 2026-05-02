@@ -1,8 +1,22 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { featuredHotels, popularTours } from "@/lib/demo-data";
 import { Star, Search, Building2, Map, Plane, UtensilsCrossed, ShieldCheck, ArrowRight, ChevronRight, Users, Globe } from "lucide-react";
 
 export default function HomePage() {
+  const router = useRouter();
+  const [destination, setDestination] = useState("");
+
+  function handleHeroSearch(e: React.FormEvent) {
+    e.preventDefault();
+    if (destination.trim()) {
+      router.push("/hotels");
+    }
+  }
+
   return (
     <div>
       {/* Hero */}
@@ -22,7 +36,7 @@ export default function HomePage() {
           </div>
 
           {/* Search Box */}
-          <div className="mt-10 bg-white rounded-2xl p-4 md:p-5 max-w-3xl" style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
+          <form onSubmit={handleHeroSearch} className="mt-10 bg-white rounded-2xl p-4 md:p-5 max-w-3xl" style={{ boxShadow: "0 20px 60px rgba(0,0,0,0.15)" }}>
             {/* Tabs */}
             <div className="flex gap-1 mb-4">
               {[
@@ -31,7 +45,7 @@ export default function HomePage() {
                 { icon: Plane, label: "Flights", active: false },
                 { icon: UtensilsCrossed, label: "Restaurants", active: false },
               ].map((tab) => (
-                <button key={tab.label} className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                <button key={tab.label} type="button" className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                   tab.active
                     ? "text-white shadow-md"
                     : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
@@ -47,14 +61,20 @@ export default function HomePage() {
             <div className="grid grid-cols-1 sm:grid-cols-[1fr_140px_auto] gap-3">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input type="text" placeholder="Where do you want to go?" className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-blue-400 focus:outline-none" />
+                <input
+                  type="text"
+                  placeholder="Where do you want to go?"
+                  value={destination}
+                  onChange={(e) => setDestination(e.target.value)}
+                  className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-blue-400 focus:outline-none"
+                />
               </div>
               <input type="date" defaultValue="2026-04-26" className="py-3.5 px-4 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-700 focus:bg-white focus:border-blue-400 focus:outline-none" />
-              <button className="flex items-center justify-center gap-2 text-white rounded-xl py-3.5 px-8 text-sm font-bold transition-all hover:opacity-90 active:scale-[0.98]" style={{ background: "#2563eb" }}>
+              <button type="submit" className="flex items-center justify-center gap-2 text-white rounded-xl py-3.5 px-8 text-sm font-bold transition-all hover:opacity-90 active:scale-[0.98]" style={{ background: "#2563eb" }}>
                 <Search className="w-4 h-4" /> Search
               </button>
             </div>
-          </div>
+          </form>
 
           {/* Trust badges */}
           <div className="mt-6 flex items-center gap-6 text-sm" style={{ color: "rgba(255,255,255,0.6)" }}>

@@ -1,12 +1,20 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
+import { FormField } from "@/components/ui/form-field";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useToast } from "@/lib/state/toast-context";
 import {
   Building2, Users, MapPin, Bell, CreditCard, Mail,
   Phone, Globe, Upload, Plus, Shield, Smartphone,
-  MessageSquare, Edit, Trash2, CheckCircle,
+  MessageSquare, Edit, Trash2, CheckCircle, ExternalLink,
 } from "lucide-react";
 
-const businessProfile = {
+const initialBusinessProfile = {
   name: "Diamond Hotel & Resort",
   legalName: "Diamond Hospitality Ltd.",
   address: "Plot 12, Block A, Kolatoli Beach Road, Cox's Bazar",
@@ -18,7 +26,7 @@ const businessProfile = {
   established: "2020",
 };
 
-const users = [
+const initialUsers = [
   { id: 1, name: "Mohammed Karim", email: "karim@diamondhotel.com", role: "Admin", lastActive: "2 min ago", status: "Active" },
   { id: 2, name: "Riya Akter", email: "riya@diamondhotel.com", role: "Manager", lastActive: "15 min ago", status: "Active" },
   { id: 3, name: "Sumon Ali", email: "sumon@diamondhotel.com", role: "Staff", lastActive: "1 hour ago", status: "Active" },
@@ -27,12 +35,12 @@ const users = [
   { id: 6, name: "Mina Begum", email: "mina@diamondhotel.com", role: "Staff", lastActive: "2 days ago", status: "Inactive" },
 ];
 
-const branches = [
+const initialBranches = [
   { id: 1, name: "Cox's Bazar Main Branch", address: "Kolatoli Beach Road, Cox's Bazar", phone: "+880 1711-999888", status: "Active", modules: 5 },
   { id: 2, name: "Dhaka City Office", address: "Gulshan-2, Dhaka", phone: "+880 1711-999889", status: "Active", modules: 2 },
 ];
 
-const notifications = [
+const initialNotifications = [
   { id: "new_booking", label: "New Reservation / Booking", email: true, sms: true, whatsapp: false },
   { id: "check_in", label: "Guest Check-in / Check-out", email: true, sms: false, whatsapp: false },
   { id: "payment", label: "Payment Received", email: true, sms: true, whatsapp: true },
@@ -40,6 +48,17 @@ const notifications = [
   { id: "leave_request", label: "Leave Request", email: true, sms: false, whatsapp: false },
   { id: "daily_summary", label: "Daily Revenue Summary", email: true, sms: false, whatsapp: true },
   { id: "overdue_payment", label: "Overdue Payment Alert", email: true, sms: true, whatsapp: true },
+];
+
+const initialModules = [
+  { name: "Hotel PMS", price: "2,000", active: true },
+  { name: "Restaurant POS", price: "1,500", active: true },
+  { name: "Laundry Management", price: "1,000", active: true },
+  { name: "Accounts & Finance", price: "1,500", active: true },
+  { name: "Inventory", price: "1,000", active: true },
+  { name: "HR & Payroll", price: "1,200", active: false },
+  { name: "Tour Management", price: "1,800", active: false },
+  { name: "Air Ticketing", price: "1,500", active: false },
 ];
 
 const roleColors: Record<string, string> = {
@@ -50,12 +69,161 @@ const roleColors: Record<string, string> = {
   Receptionist: "bg-hotel-100 text-hotel-700",
 };
 
+const roleOptions = [
+  { value: "Admin", label: "Admin" },
+  { value: "Manager", label: "Manager" },
+  { value: "Staff", label: "Staff" },
+  { value: "Accountant", label: "Accountant" },
+  { value: "Receptionist", label: "Receptionist" },
+];
+
 export default function SettingsPage() {
+  const { addToast } = useToast();
+
+  // Business profile state
+  const [businessProfile, setBusinessProfile] = useState(initialBusinessProfile);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState(initialBusinessProfile);
+
+  // Upload logo modal
+  const [uploadLogoOpen, setUploadLogoOpen] = useState(false);
+
+  // User management state
+  const [userList, setUserList] = useState(initialUsers);
+  const [addUserOpen, setAddUserOpen] = useState(false);
+  const [editUserOpen, setEditUserOpen] = useState(false);
+  const [userForm, setUserForm] = useState({ name: "", email: "", role: "Staff" });
+  const [editingUser, setEditingUser] = useState<typeof initialUsers[0] | null>(null);
+  const [removeUserConfirm, setRemoveUserConfirm] = useState<typeof initialUsers[0] | null>(null);
+
+  // Branch management state
+  const [branchList, setBranchList] = useState(initialBranches);
+  const [addBranchOpen, setAddBranchOpen] = useState(false);
+  const [editBranchOpen, setEditBranchOpen] = useState(false);
+  const [branchForm, setBranchForm] = useState({ name: "", address: "", phone: "" });
+  const [editingBranch, setEditingBranch] = useState<typeof initialBranches[0] | null>(null);
+
+  // Notification state
+  const [notifications, setNotifications] = useState(initialNotifications);
+
+  // Subscription modal
+  const [subscriptionOpen, setSubscriptionOpen] = useState(false);
+
+  // Module state
+  const [modules, setModules] = useState(initialModules);
+
+  // ─── Business Profile handlers ──────
+  function openEditProfile() {
+    setProfileForm({ ...businessProfile });
+    setEditProfileOpen(true);
+  }
+  function saveProfile() {
+    setBusinessProfile({ ...profileForm });
+    setEditProfileOpen(false);
+    addToast("Business profile updated successfully");
+  }
+
+  // ─── User handlers ──────
+  function openAddUser() {
+    setUserForm({ name: "", email: "", role: "Staff" });
+    setAddUserOpen(true);
+  }
+  function saveNewUser() {
+    const newUser = {
+      id: Math.max(...userList.map(u => u.id)) + 1,
+      name: userForm.name,
+      email: userForm.email,
+      role: userForm.role,
+      lastActive: "Just now",
+      status: "Active",
+    };
+    setUserList([...userList, newUser]);
+    setAddUserOpen(false);
+    addToast(`User "${userForm.name}" added successfully`);
+  }
+  function openEditUser(user: typeof initialUsers[0]) {
+    setEditingUser(user);
+    setUserForm({ name: user.name, email: user.email, role: user.role });
+    setEditUserOpen(true);
+  }
+  function saveEditUser() {
+    if (!editingUser) return;
+    setUserList(userList.map(u => u.id === editingUser.id ? { ...u, name: userForm.name, email: userForm.email, role: userForm.role } : u));
+    setEditUserOpen(false);
+    addToast(`User "${userForm.name}" updated successfully`);
+  }
+  function confirmRemoveUser() {
+    if (!removeUserConfirm) return;
+    setUserList(userList.filter(u => u.id !== removeUserConfirm.id));
+    addToast(`User "${removeUserConfirm.name}" removed`, "warning");
+  }
+
+  // ─── Branch handlers ──────
+  function openAddBranch() {
+    setBranchForm({ name: "", address: "", phone: "" });
+    setAddBranchOpen(true);
+  }
+  function saveNewBranch() {
+    const newBranch = {
+      id: Math.max(...branchList.map(b => b.id)) + 1,
+      name: branchForm.name,
+      address: branchForm.address,
+      phone: branchForm.phone,
+      status: "Active",
+      modules: 0,
+    };
+    setBranchList([...branchList, newBranch]);
+    setAddBranchOpen(false);
+    addToast(`Branch "${branchForm.name}" added successfully`);
+  }
+  function openEditBranch(branch: typeof initialBranches[0]) {
+    setEditingBranch(branch);
+    setBranchForm({ name: branch.name, address: branch.address, phone: branch.phone });
+    setEditBranchOpen(true);
+  }
+  function saveEditBranch() {
+    if (!editingBranch) return;
+    setBranchList(branchList.map(b => b.id === editingBranch.id ? { ...b, name: branchForm.name, address: branchForm.address, phone: branchForm.phone } : b));
+    setEditBranchOpen(false);
+    addToast(`Branch "${branchForm.name}" updated successfully`);
+  }
+
+  // ─── Notification toggle ──────
+  function toggleNotification(id: string, channel: "email" | "sms" | "whatsapp") {
+    setNotifications(notifications.map(n => {
+      if (n.id !== id) return n;
+      const updated = { ...n, [channel]: !n[channel] };
+      return updated;
+    }));
+    const notif = notifications.find(n => n.id === id);
+    const channelLabel = channel === "whatsapp" ? "WhatsApp" : channel.charAt(0).toUpperCase() + channel.slice(1);
+    const currentValue = notif?.[channel];
+    addToast(`${channelLabel} ${currentValue ? "disabled" : "enabled"} for "${notif?.label}"`, "info");
+  }
+
+  // ─── Module activate ──────
+  function activateModule(name: string) {
+    setModules(modules.map(m => m.name === name ? { ...m, active: true } : m));
+    addToast(`Module "${name}" activated successfully`);
+  }
+
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       <div>
         <h1 className="text-xl font-bold text-gray-900">Settings</h1>
         <p className="text-sm text-gray-500">Manage your business profile, users, and preferences</p>
+      </div>
+
+      {/* Public Booking Page */}
+      <div className="bg-brand-50 border border-brand-200 rounded-xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900">Public Booking Page</h2>
+          <p className="text-xs text-gray-500 mt-0.5">Your customers can book directly through your public page</p>
+          <p className="text-xs font-mono text-brand-600 mt-1">diamond.platform.com</p>
+        </div>
+        <Link href="/book/diamond" className="flex items-center gap-1.5 px-4 py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-600">
+          <ExternalLink className="w-3.5 h-3.5" /> View Public Page
+        </Link>
       </div>
 
       {/* Business Profile */}
@@ -64,7 +232,7 @@ export default function SettingsPage() {
           <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
             <Building2 className="w-4 h-4 text-gray-400" /> Business Profile
           </h2>
-          <button className="text-xs text-brand-600 hover:underline font-medium flex items-center gap-1">
+          <button onClick={openEditProfile} className="text-xs text-brand-600 hover:underline font-medium flex items-center gap-1">
             <Edit className="w-3 h-3" /> Edit
           </button>
         </div>
@@ -75,7 +243,7 @@ export default function SettingsPage() {
               <div className="w-24 h-24 bg-brand-100 rounded-2xl flex items-center justify-center text-brand-700 text-3xl font-bold border-2 border-dashed border-brand-200">
                 DH
               </div>
-              <button className="text-xs text-brand-600 hover:underline flex items-center gap-1">
+              <button onClick={() => setUploadLogoOpen(true)} className="text-xs text-brand-600 hover:underline flex items-center gap-1">
                 <Upload className="w-3 h-3" /> Upload Logo
               </button>
             </div>
@@ -129,7 +297,7 @@ export default function SettingsPage() {
           <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
             <Users className="w-4 h-4 text-gray-400" /> User Management
           </h2>
-          <Button size="sm"><Plus className="w-4 h-4" /> Add User</Button>
+          <Button size="sm" onClick={openAddUser}><Plus className="w-4 h-4" /> Add User</Button>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -143,7 +311,7 @@ export default function SettingsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {users.map((user) => (
+              {userList.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
@@ -168,9 +336,9 @@ export default function SettingsPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
-                      <button className="text-xs text-brand-600 hover:underline font-medium">Edit</button>
+                      <button onClick={() => openEditUser(user)} className="text-xs text-brand-600 hover:underline font-medium">Edit</button>
                       {user.role !== "Admin" && (
-                        <button className="text-xs text-danger-500 hover:underline font-medium">Remove</button>
+                        <button onClick={() => setRemoveUserConfirm(user)} className="text-xs text-danger-500 hover:underline font-medium">Remove</button>
                       )}
                     </div>
                   </td>
@@ -187,13 +355,13 @@ export default function SettingsPage() {
           <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
             <MapPin className="w-4 h-4 text-gray-400" /> Branch Management
           </h2>
-          <button className="text-xs text-brand-600 hover:underline font-medium flex items-center gap-1">
+          <button onClick={openAddBranch} className="text-xs text-brand-600 hover:underline font-medium flex items-center gap-1">
             <Plus className="w-3 h-3" /> Add Branch
           </button>
         </div>
         <div className="p-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {branches.map((branch) => (
+            {branchList.map((branch) => (
               <div key={branch.id} className="flex items-start gap-3 p-4 bg-gray-50 rounded-xl border border-gray-200">
                 <div className="w-10 h-10 bg-brand-100 rounded-lg flex items-center justify-center text-brand-700 shrink-0">
                   <Building2 className="w-5 h-5" />
@@ -207,7 +375,7 @@ export default function SettingsPage() {
                   <p className="text-xs text-gray-500 flex items-center gap-1"><Phone className="w-3 h-3" />{branch.phone}</p>
                   <p className="text-[10px] text-gray-400 mt-1">{branch.modules} modules active</p>
                 </div>
-                <button className="text-xs text-brand-600 hover:underline font-medium shrink-0">Edit</button>
+                <button onClick={() => openEditBranch(branch)} className="text-xs text-brand-600 hover:underline font-medium shrink-0">Edit</button>
               </div>
             ))}
           </div>
@@ -244,19 +412,19 @@ export default function SettingsPage() {
                     <td className="py-3 text-sm text-gray-700">{notif.label}</td>
                     <td className="py-3 text-center">
                       <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" defaultChecked={notif.email} className="sr-only peer" />
+                        <input type="checkbox" checked={notif.email} onChange={() => toggleNotification(notif.id, "email")} className="sr-only peer" />
                         <div className="w-9 h-5 bg-gray-200 peer-checked:bg-brand-500 rounded-full peer-focus:ring-2 peer-focus:ring-brand-300 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full" />
                       </label>
                     </td>
                     <td className="py-3 text-center">
                       <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" defaultChecked={notif.sms} className="sr-only peer" />
+                        <input type="checkbox" checked={notif.sms} onChange={() => toggleNotification(notif.id, "sms")} className="sr-only peer" />
                         <div className="w-9 h-5 bg-gray-200 peer-checked:bg-brand-500 rounded-full peer-focus:ring-2 peer-focus:ring-brand-300 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full" />
                       </label>
                     </td>
                     <td className="py-3 text-center">
                       <label className="relative inline-flex items-center cursor-pointer">
-                        <input type="checkbox" defaultChecked={notif.whatsapp} className="sr-only peer" />
+                        <input type="checkbox" checked={notif.whatsapp} onChange={() => toggleNotification(notif.id, "whatsapp")} className="sr-only peer" />
                         <div className="w-9 h-5 bg-gray-200 peer-checked:bg-brand-500 rounded-full peer-focus:ring-2 peer-focus:ring-brand-300 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-full" />
                       </label>
                     </td>
@@ -286,7 +454,7 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">Monthly Fee</span>
-                  <span className="font-bold text-gray-900">৳15,000/mo</span>
+                  <span className="font-bold text-gray-900">&#2547;15,000/mo</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">Billing Cycle</span>
@@ -301,23 +469,14 @@ export default function SettingsPage() {
                   <span className="text-gray-700">Unlimited</span>
                 </div>
               </div>
-              <button className="mt-3 w-full text-xs text-center py-2 bg-brand-500 text-white rounded-lg font-medium hover:bg-brand-400">Manage Subscription</button>
+              <button onClick={() => setSubscriptionOpen(true)} className="mt-3 w-full text-xs text-center py-2 bg-brand-500 text-white rounded-lg font-medium hover:bg-brand-400">Manage Subscription</button>
             </div>
 
             {/* Active Modules */}
             <div className="flex-1">
               <h3 className="text-xs font-semibold text-gray-700 mb-2">Active Modules</h3>
               <div className="space-y-1.5">
-                {[
-                  { name: "Hotel PMS", price: "৳2,000", active: true },
-                  { name: "Restaurant POS", price: "৳1,500", active: true },
-                  { name: "Laundry Management", price: "৳1,000", active: true },
-                  { name: "Accounts & Finance", price: "৳1,500", active: true },
-                  { name: "Inventory", price: "৳1,000", active: true },
-                  { name: "HR & Payroll", price: "৳1,200", active: false },
-                  { name: "Tour Management", price: "৳1,800", active: false },
-                  { name: "Air Ticketing", price: "৳1,500", active: false },
-                ].map((mod) => (
+                {modules.map((mod) => (
                   <div key={mod.name} className="flex items-center justify-between py-1.5 px-2 rounded-lg hover:bg-gray-50">
                     <div className="flex items-center gap-2">
                       {mod.active ? (
@@ -328,9 +487,9 @@ export default function SettingsPage() {
                       <span className={`text-sm ${mod.active ? "text-gray-900" : "text-gray-400"}`}>{mod.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500">{mod.price}/mo</span>
+                      <span className="text-xs text-gray-500">&#2547;{mod.price}/mo</span>
                       {!mod.active && (
-                        <button className="text-[10px] text-brand-600 hover:underline font-medium">Activate</button>
+                        <button onClick={() => activateModule(mod.name)} className="text-[10px] text-brand-600 hover:underline font-medium">Activate</button>
                       )}
                     </div>
                   </div>
@@ -351,7 +510,7 @@ export default function SettingsPage() {
                 <div key={payment.invoice} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-gray-500">{payment.date}</span>
-                    <span className="text-sm font-medium text-gray-900">৳{payment.amount.toLocaleString()}</span>
+                    <span className="text-sm font-medium text-gray-900">&#2547;{payment.amount.toLocaleString()}</span>
                     <span className="text-xs text-gray-400">{payment.method}</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -364,6 +523,143 @@ export default function SettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* ─── MODALS ─── */}
+
+      {/* Edit Business Profile Modal */}
+      <Modal open={editProfileOpen} onClose={() => setEditProfileOpen(false)} title="Edit Business Profile" size="lg" footer={
+        <>
+          <Button variant="ghost" size="sm" onClick={() => setEditProfileOpen(false)}>Cancel</Button>
+          <Button size="sm" onClick={saveProfile}>Save Changes</Button>
+        </>
+      }>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField label="Business Name" required value={profileForm.name} onChange={(v) => setProfileForm({ ...profileForm, name: v })} placeholder="Business name" />
+          <FormField label="Legal Name" required value={profileForm.legalName} onChange={(v) => setProfileForm({ ...profileForm, legalName: v })} placeholder="Legal name" />
+          <div className="sm:col-span-2">
+            <FormField label="Address" required value={profileForm.address} onChange={(v) => setProfileForm({ ...profileForm, address: v })} placeholder="Full address" />
+          </div>
+          <FormField label="Phone" type="tel" value={profileForm.phone} onChange={(v) => setProfileForm({ ...profileForm, phone: v })} placeholder="+880 ..." />
+          <FormField label="Email" type="email" value={profileForm.email} onChange={(v) => setProfileForm({ ...profileForm, email: v })} placeholder="email@example.com" />
+          <FormField label="TIN" value={profileForm.tin} onChange={(v) => setProfileForm({ ...profileForm, tin: v })} placeholder="Tax ID Number" />
+          <FormField label="BIN" value={profileForm.bin} onChange={(v) => setProfileForm({ ...profileForm, bin: v })} placeholder="Business ID Number" />
+        </div>
+      </Modal>
+
+      {/* Upload Logo Modal */}
+      <Modal open={uploadLogoOpen} onClose={() => setUploadLogoOpen(false)} title="Upload Business Logo" size="sm" footer={
+        <>
+          <Button variant="ghost" size="sm" onClick={() => setUploadLogoOpen(false)}>Cancel</Button>
+          <Button size="sm" onClick={() => { setUploadLogoOpen(false); addToast("Logo uploaded successfully"); }}>Upload</Button>
+        </>
+      }>
+        <div className="text-center py-6">
+          <div className="w-24 h-24 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-gray-300">
+            <Upload className="w-8 h-8 text-gray-400" />
+          </div>
+          <p className="text-sm text-gray-600 mb-1">Click or drag to upload</p>
+          <p className="text-xs text-gray-400">PNG, JPG up to 2MB. Recommended: 256x256px</p>
+        </div>
+      </Modal>
+
+      {/* Add User Modal */}
+      <Modal open={addUserOpen} onClose={() => setAddUserOpen(false)} title="Add New User" footer={
+        <>
+          <Button variant="ghost" size="sm" onClick={() => setAddUserOpen(false)}>Cancel</Button>
+          <Button size="sm" onClick={saveNewUser} disabled={!userForm.name || !userForm.email}>Add User</Button>
+        </>
+      }>
+        <div className="space-y-4">
+          <FormField label="Full Name" required value={userForm.name} onChange={(v) => setUserForm({ ...userForm, name: v })} placeholder="Enter full name" />
+          <FormField label="Email" required type="email" value={userForm.email} onChange={(v) => setUserForm({ ...userForm, email: v })} placeholder="user@diamondhotel.com" />
+          <FormField label="Role" required options={roleOptions} value={userForm.role} onChange={(v) => setUserForm({ ...userForm, role: v })} />
+        </div>
+      </Modal>
+
+      {/* Edit User Modal */}
+      <Modal open={editUserOpen} onClose={() => setEditUserOpen(false)} title="Edit User" footer={
+        <>
+          <Button variant="ghost" size="sm" onClick={() => setEditUserOpen(false)}>Cancel</Button>
+          <Button size="sm" onClick={saveEditUser}>Save Changes</Button>
+        </>
+      }>
+        <div className="space-y-4">
+          <FormField label="Full Name" required value={userForm.name} onChange={(v) => setUserForm({ ...userForm, name: v })} placeholder="Enter full name" />
+          <FormField label="Email" required type="email" value={userForm.email} onChange={(v) => setUserForm({ ...userForm, email: v })} placeholder="user@diamondhotel.com" />
+          <FormField label="Role" required options={roleOptions} value={userForm.role} onChange={(v) => setUserForm({ ...userForm, role: v })} />
+        </div>
+      </Modal>
+
+      {/* Remove User Confirm */}
+      <ConfirmDialog
+        open={!!removeUserConfirm}
+        onClose={() => setRemoveUserConfirm(null)}
+        onConfirm={confirmRemoveUser}
+        title="Remove User"
+        message={`Are you sure you want to remove "${removeUserConfirm?.name}"? They will lose access to the platform immediately.`}
+        confirmLabel="Remove User"
+        variant="danger"
+      />
+
+      {/* Add Branch Modal */}
+      <Modal open={addBranchOpen} onClose={() => setAddBranchOpen(false)} title="Add New Branch" footer={
+        <>
+          <Button variant="ghost" size="sm" onClick={() => setAddBranchOpen(false)}>Cancel</Button>
+          <Button size="sm" onClick={saveNewBranch} disabled={!branchForm.name || !branchForm.address}>Add Branch</Button>
+        </>
+      }>
+        <div className="space-y-4">
+          <FormField label="Branch Name" required value={branchForm.name} onChange={(v) => setBranchForm({ ...branchForm, name: v })} placeholder="e.g. Sylhet Branch" />
+          <FormField label="Address" required value={branchForm.address} onChange={(v) => setBranchForm({ ...branchForm, address: v })} placeholder="Full address" />
+          <FormField label="Phone" type="tel" value={branchForm.phone} onChange={(v) => setBranchForm({ ...branchForm, phone: v })} placeholder="+880 ..." />
+        </div>
+      </Modal>
+
+      {/* Edit Branch Modal */}
+      <Modal open={editBranchOpen} onClose={() => setEditBranchOpen(false)} title="Edit Branch" footer={
+        <>
+          <Button variant="ghost" size="sm" onClick={() => setEditBranchOpen(false)}>Cancel</Button>
+          <Button size="sm" onClick={saveEditBranch}>Save Changes</Button>
+        </>
+      }>
+        <div className="space-y-4">
+          <FormField label="Branch Name" required value={branchForm.name} onChange={(v) => setBranchForm({ ...branchForm, name: v })} placeholder="Branch name" />
+          <FormField label="Address" required value={branchForm.address} onChange={(v) => setBranchForm({ ...branchForm, address: v })} placeholder="Full address" />
+          <FormField label="Phone" type="tel" value={branchForm.phone} onChange={(v) => setBranchForm({ ...branchForm, phone: v })} placeholder="+880 ..." />
+        </div>
+      </Modal>
+
+      {/* Manage Subscription Modal */}
+      <Modal open={subscriptionOpen} onClose={() => setSubscriptionOpen(false)} title="Manage Subscription" size="lg" footer={
+        <Button variant="ghost" size="sm" onClick={() => setSubscriptionOpen(false)}>Close</Button>
+      }>
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600">You are currently on the <strong>Enterprise Plan</strong>. Choose a plan below to change your subscription.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              { name: "Starter", price: "3,000", users: "5 users", modules: "2 modules", current: false },
+              { name: "Growth", price: "7,000", users: "15 users", modules: "5 modules", current: false },
+              { name: "Enterprise", price: "15,000", users: "Unlimited", modules: "All modules", current: true },
+            ].map((plan) => (
+              <div key={plan.name} className={`p-4 rounded-xl border-2 ${plan.current ? "border-brand-500 bg-brand-50" : "border-gray-200"}`}>
+                <h4 className="text-sm font-bold text-gray-900">{plan.name}</h4>
+                <p className="text-lg font-bold text-brand-600 mt-1">&#2547;{plan.price}<span className="text-xs font-normal text-gray-400">/mo</span></p>
+                <div className="mt-3 space-y-1">
+                  <p className="text-xs text-gray-500">{plan.users}</p>
+                  <p className="text-xs text-gray-500">{plan.modules}</p>
+                </div>
+                {plan.current ? (
+                  <div className="mt-3 text-xs text-center py-1.5 bg-brand-100 text-brand-700 rounded-lg font-medium">Current Plan</div>
+                ) : (
+                  <button onClick={() => { setSubscriptionOpen(false); addToast(`Subscription change to ${plan.name} requested`, "info"); }} className="mt-3 w-full text-xs text-center py-1.5 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200">
+                    Switch to {plan.name}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

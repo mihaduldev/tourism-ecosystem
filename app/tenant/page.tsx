@@ -1,48 +1,72 @@
 "use client";
 
 import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { type TenantType } from "@/components/tenant/sidebar";
 import { useAuth } from "@/lib/auth-context";
+import { useDataStore } from "@/lib/state/data-store";
+import { useToast } from "@/lib/state/toast-context";
 import { StatCard } from "@/components/ui/stat-card";
 import { WeeklyBarChart } from "@/components/ui/charts";
 import { OccupancyGauge } from "@/components/ui/charts";
-import {
-  hotelStats, restaurantStats, laundryStats, tourStats,
-  weeklyRevenue, rooms, todayCheckIns, recentActivity,
-  salesByCategory, kdsOrders, laundryOrders, tourPackages, tourBookings,
-} from "@/lib/demo-data";
+import { weeklyRevenue, todayCheckIns, salesByCategory } from "@/lib/demo-data";
 import { StatusBadge } from "@/components/ui/badge";
 import {
   BedDouble, UserCheck, LogOut, Banknote, AlertTriangle, Users,
   ShoppingBag, Table2, ChefHat, Truck, MapPin, Calendar,
-  ArrowRight, TrendingUp, Clock
+  ArrowRight, TrendingUp, Clock, Check, ChevronRight
 } from "lucide-react";
 
 // ─── Hotel Dashboard ──────────────────────────────────────────────────────
 
 function HotelDashboard() {
+  const { state, updateItem } = useDataStore();
+  const { addToast } = useToast();
+
+  const rooms = state.rooms;
+  const reservations = state.reservations;
+
+  const statusOf = (r: typeof rooms[number]) => (r.status as string).toLowerCase();
+
   const roomsByStatus = {
-    available: rooms.filter(r => r.status === "available").length,
-    occupied: rooms.filter(r => r.status === "occupied").length,
-    dirty: rooms.filter(r => r.status === "dirty").length,
-    maintenance: rooms.filter(r => r.status === "maintenance").length,
+    available: rooms.filter(r => statusOf(r) === "available").length,
+    occupied: rooms.filter(r => statusOf(r) === "occupied").length,
+    dirty: rooms.filter(r => statusOf(r) === "dirty").length,
+    maintenance: rooms.filter(r => statusOf(r) === "maintenance").length,
   };
+
+  const totalRooms = rooms.length;
+  const occupancy = totalRooms > 0 ? Math.round((roomsByStatus.occupied / totalRooms) * 100) : 0;
+  const checkedIn = reservations.filter(r => (r.status as string) === "Checked-In").length;
+  const checkingOut = reservations.filter(r => (r.status as string) === "Checking-Out" || (r.status as string) === "Checked-Out").length;
+  const revenueToday = reservations.filter(r => (r.status as string) === "Checked-In").reduce((sum, r) => sum + (r.rate || 0), 0);
 
   const colorMap: Record<string, string> = {
     available: "bg-success-500", occupied: "bg-brand-500",
     dirty: "bg-warning-500", maintenance: "bg-danger-500",
   };
 
+  function handleCleanRoom(roomId: string, roomNum: string) {
+    updateItem("rooms", roomId, { status: "Available" as any });
+    addToast(`Room ${roomNum} marked as Available`, "success");
+  }
+
   return (
     <div className="space-y-5">
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Today's Revenue" value={`৳${hotelStats.revenueToday.toLocaleString()}`} trend={hotelStats.revenueTrend} icon={<Banknote className="w-5 h-5" />} accent="#2563eb" />
-        <StatCard title="Check-ins Today" value={hotelStats.checkInsToday} subValue="3 upcoming" icon={<UserCheck className="w-5 h-5" />} />
-        <StatCard title="Check-outs Today" value={hotelStats.checkOutsToday} icon={<LogOut className="w-5 h-5" />} />
-        <StatCard title="Rooms Available" value={`${hotelStats.roomsAvailable}/${hotelStats.roomsTotal}`} subValue={`${hotelStats.occupancy}% occupied`} icon={<BedDouble className="w-5 h-5" />} />
+        <Link href="/tenant/accounts/transactions">
+          <StatCard title="Today's Revenue" value={`৳${revenueToday.toLocaleString()}`} trend={12.4} icon={<Banknote className="w-5 h-5" />} accent="#2563eb" />
+        </Link>
+        <Link href="/tenant/hotel/reservations">
+          <StatCard title="Check-ins Today" value={checkedIn} subValue={`${checkingOut} checking out`} icon={<UserCheck className="w-5 h-5" />} />
+        </Link>
+        <Link href="/tenant/hotel/reservations">
+          <StatCard title="Check-outs Today" value={checkingOut} icon={<LogOut className="w-5 h-5" />} />
+        </Link>
+        <Link href="/tenant/hotel/rooms">
+          <StatCard title="Rooms Available" value={`${roomsByStatus.available}/${totalRooms}`} subValue={`${occupancy}% occupied`} icon={<BedDouble className="w-5 h-5" />} />
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -52,7 +76,7 @@ function HotelDashboard() {
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
             <h3 className="text-sm font-semibold text-gray-900 mb-3">Today's Occupancy</h3>
             <div className="flex items-center gap-4">
-              <OccupancyGauge value={hotelStats.occupancy} />
+              <OccupancyGauge value={occupancy} />
               <div className="space-y-2">
                 {Object.entries(roomsByStatus).map(([status, count]) => (
                   <div key={status} className="flex items-center gap-2 text-xs">
@@ -105,23 +129,31 @@ function HotelDashboard() {
         </div>
         <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
           {rooms.map((room) => {
+            const st = statusOf(room);
             const color = {
               available: "bg-success-100 border-success-300 text-success-700",
               occupied: "bg-brand-100 border-brand-300 text-brand-700",
               dirty: "bg-warning-100 border-warning-300 text-warning-700",
               maintenance: "bg-danger-100 border-danger-300 text-danger-700",
-            }[room.status] ?? "bg-gray-100 border-gray-300 text-gray-700";
+            }[st] ?? "bg-gray-100 border-gray-300 text-gray-700";
+
+            const isDirty = st === "dirty";
 
             return (
-              <div key={room.id} className={`border rounded-lg p-1.5 text-center cursor-pointer hover:shadow-md transition-shadow ${color}`}>
-                <p className="text-xs font-bold">{room.id}</p>
-                <p className="text-[9px] leading-tight mt-0.5 capitalize">{room.status === "available" ? "✓" : room.status === "occupied" ? "●" : room.status === "dirty" ? "~" : "✗"}</p>
+              <div
+                key={room.id}
+                onClick={isDirty ? () => handleCleanRoom(room.id, room.number || room.id) : undefined}
+                title={isDirty ? "Click to mark as Available" : st}
+                className={`border rounded-lg p-1.5 text-center cursor-pointer hover:shadow-md transition-shadow ${color} ${isDirty ? "ring-2 ring-warning-400 ring-offset-1" : ""}`}
+              >
+                <p className="text-xs font-bold">{room.number || room.id}</p>
+                <p className="text-[9px] leading-tight mt-0.5 capitalize">{st === "available" ? "✓" : st === "occupied" ? "●" : st === "dirty" ? "~" : "✗"}</p>
               </div>
             );
           })}
         </div>
         <div className="flex items-center gap-4 mt-3 text-[10px] text-gray-500">
-          {[["bg-success-500", "Available"], ["bg-brand-500", "Occupied"], ["bg-warning-500", "Dirty"], ["bg-danger-500", "Maintenance"]].map(([c, l]) => (
+          {[["bg-success-500", "Available"], ["bg-brand-500", "Occupied"], ["bg-warning-500", "Dirty (click to clean)"], ["bg-danger-500", "Maintenance"]].map(([c, l]) => (
             <span key={l} className="flex items-center gap-1"><span className={`w-2 h-2 rounded-full ${c}`} />{l}</span>
           ))}
         </div>
@@ -133,16 +165,32 @@ function HotelDashboard() {
 // ─── Restaurant Dashboard ─────────────────────────────────────────────────
 
 function RestaurantDashboard() {
-  const occupiedTables = restaurantStats.tablesOccupied;
-  const urgentOrders = kdsOrders.filter(o => o.status === "urgent").length;
+  const { state, deleteItem } = useDataStore();
+  const { addToast } = useToast();
+
+  const kdsOrders = state.kdsOrders;
+  const restaurantTables = state.restaurantTables;
+
+  const occupiedTables = restaurantTables.filter(t => (t.status as string).toLowerCase() === "occupied").length;
+  const totalTables = restaurantTables.length;
+  const urgentOrders = kdsOrders.filter(o => (o.status as string) === "urgent" || (o.priority as string) === "urgent").length;
+  const revenueToday = 42300; // Static for demo — no POS transactions yet
 
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Today's Revenue" value={`৳${restaurantStats.revenueToday.toLocaleString()}`} trend={restaurantStats.revenueTrend} icon={<Banknote className="w-5 h-5" />} accent="#ea580c" />
-        <StatCard title="Orders Today" value={restaurantStats.ordersToday} subValue={`Avg ৳${restaurantStats.avgOrderValue}`} icon={<ShoppingBag className="w-5 h-5" />} />
-        <StatCard title="Tables Occupied" value={`${occupiedTables}/${restaurantStats.tablesTotal}`} icon={<Table2 className="w-5 h-5" />} />
-        <StatCard title="Kitchen Queue" value={restaurantStats.kitchenQueue} subValue={`${urgentOrders} urgent`} icon={<ChefHat className="w-5 h-5" />} accent="#ea580c" />
+        <Link href="/tenant/accounts/transactions">
+          <StatCard title="Today's Revenue" value={`৳${revenueToday.toLocaleString()}`} trend={6.8} icon={<Banknote className="w-5 h-5" />} accent="#ea580c" />
+        </Link>
+        <Link href="/tenant/restaurant/pos">
+          <StatCard title="Orders Today" value={kdsOrders.length} subValue={`Avg ৳341`} icon={<ShoppingBag className="w-5 h-5" />} />
+        </Link>
+        <Link href="/tenant/restaurant/tables">
+          <StatCard title="Tables Occupied" value={`${occupiedTables}/${totalTables}`} icon={<Table2 className="w-5 h-5" />} />
+        </Link>
+        <Link href="/tenant/restaurant/kds">
+          <StatCard title="Kitchen Queue" value={kdsOrders.length} subValue={`${urgentOrders} urgent`} icon={<ChefHat className="w-5 h-5" />} accent="#ea580c" />
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -152,13 +200,13 @@ function RestaurantDashboard() {
             <Link href="/tenant/restaurant/tables" className="text-xs text-restaurant-600 hover:underline">Full View →</Link>
           </div>
           <div className="grid grid-cols-5 sm:grid-cols-8 gap-2">
-            {Array.from({ length: 15 }, (_, i) => i + 1).map((n) => {
-              const t = ["available","occupied","occupied","occupied","available","occupied","occupied","occupied","dirty","available","occupied","available","reserved","available","occupied"][n-1];
-              const color = { available:"bg-success-100 border-success-300 text-success-700", occupied:"bg-restaurant-100 border-restaurant-300 text-restaurant-700", dirty:"bg-warning-100 border-warning-300 text-warning-700", reserved:"bg-brand-100 border-brand-300 text-brand-700" }[t] ?? "bg-gray-100 border-gray-200";
+            {restaurantTables.map((t) => {
+              const ts = (t.status as string).toLowerCase();
+              const color = { available:"bg-success-100 border-success-300 text-success-700", occupied:"bg-restaurant-100 border-restaurant-300 text-restaurant-700", dirty:"bg-warning-100 border-warning-300 text-warning-700", reserved:"bg-brand-100 border-brand-300 text-brand-700" }[ts] ?? "bg-gray-100 border-gray-200";
               return (
-                <div key={n} className={`border-2 rounded-xl p-2 text-center cursor-pointer hover:shadow-md transition-shadow ${color}`}>
-                  <p className="text-xs font-bold">T{n}</p>
-                  <p className="text-[9px]">{t === "occupied" ? "●" : t === "available" ? "✓" : t === "dirty" ? "~" : "R"}</p>
+                <div key={t.id} className={`border-2 rounded-xl p-2 text-center cursor-pointer hover:shadow-md transition-shadow ${color}`}>
+                  <p className="text-xs font-bold">{t.id}</p>
+                  <p className="text-[9px]">{ts === "occupied" ? "●" : ts === "available" ? "✓" : ts === "dirty" ? "~" : "R"}</p>
                 </div>
               );
             })}
@@ -177,10 +225,12 @@ function RestaurantDashboard() {
             <Link href="/tenant/restaurant/kds" className="text-xs text-restaurant-600 hover:underline">KDS →</Link>
           </div>
           <div className="space-y-2">
-            {kdsOrders.slice(0, 5).map((ord) => (
+            {kdsOrders.slice(0, 5).map((ord) => {
+              const ordStatus = (ord.status as string) || (ord.priority as string) || "normal";
+              return (
               <div key={ord.id} className={`flex items-center gap-2.5 p-2.5 rounded-lg border ${
-                ord.status === "urgent" ? "border-danger-200 bg-danger-50" :
-                ord.status === "warning" ? "border-warning-200 bg-warning-50" :
+                ordStatus === "urgent" ? "border-danger-200 bg-danger-50" :
+                ordStatus === "warning" ? "border-warning-200 bg-warning-50" :
                 "border-gray-200 bg-gray-50"
               }`}>
                 <div className="text-center shrink-0">
@@ -188,11 +238,24 @@ function RestaurantDashboard() {
                   <p className="text-[9px] text-gray-500">{ord.minutes}m</p>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[10px] text-gray-700 truncate">{ord.items.map(i=>`${i.qty}x ${i.name}`).join(", ")}</p>
+                  <p className="text-[10px] text-gray-700 truncate">{ord.items.map((i: any)=>`${i.qty}x ${i.name}`).join(", ")}</p>
                 </div>
-                {ord.status === "urgent" && <AlertTriangle className="w-3.5 h-3.5 text-danger-500 shrink-0" />}
+                <button
+                  onClick={() => {
+                    deleteItem("kdsOrders", ord.id);
+                    addToast(`Order ${ord.id} marked as Ready`, "success");
+                  }}
+                  className="shrink-0 flex items-center gap-1 px-2 py-1 bg-success-500 text-white text-[10px] font-semibold rounded-md hover:bg-success-600 transition-colors"
+                >
+                  <Check className="w-3 h-3" /> Ready
+                </button>
+                {ordStatus === "urgent" && <AlertTriangle className="w-3.5 h-3.5 text-danger-500 shrink-0" />}
               </div>
-            ))}
+              );
+            })}
+            {kdsOrders.length === 0 && (
+              <p className="text-xs text-gray-400 text-center py-4">No orders in queue</p>
+            )}
           </div>
         </div>
       </div>
@@ -203,7 +266,13 @@ function RestaurantDashboard() {
 // ─── Laundry Dashboard ────────────────────────────────────────────────────
 
 function LaundryDashboard() {
+  const { state, updateItem } = useDataStore();
+  const { addToast } = useToast();
+
+  const laundryOrders = state.laundryOrders;
   const kanban = ["Received", "Processing", "Ready", "Delivered"];
+  const nextStage: Record<string, string> = { Received: "Processing", Processing: "Ready", Ready: "Delivered" };
+
   const counts = {
     Received: laundryOrders.filter(o => o.status === "Received").length,
     Processing: laundryOrders.filter(o => o.status === "Processing").length,
@@ -211,13 +280,29 @@ function LaundryDashboard() {
     Delivered: laundryOrders.filter(o => o.status === "Delivered").length,
   };
 
+  function handleMoveOrder(orderId: string, currentStatus: string) {
+    const next = nextStage[currentStatus];
+    if (next) {
+      updateItem("laundryOrders", orderId, { status: next });
+      addToast(`Order ${orderId} moved to ${next}`, "success");
+    }
+  }
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Today's Revenue" value={`৳${laundryStats.revenueToday.toLocaleString()}`} icon={<Banknote className="w-5 h-5" />} accent="#9333ea" />
-        <StatCard title="New Orders" value={laundryStats.newOrders} icon={<ShoppingBag className="w-5 h-5" />} />
-        <StatCard title="Processing" value={laundryStats.processing} icon={<Clock className="w-5 h-5" />} />
-        <StatCard title="Ready for Delivery" value={laundryStats.readyDelivery} icon={<Truck className="w-5 h-5" />} />
+        <Link href="/tenant/accounts/transactions">
+          <StatCard title="Today's Revenue" value={`৳${laundryOrders.filter(o => o.status === "Delivered").reduce((s, o) => s + (o.amount || 0), 0).toLocaleString()}`} icon={<Banknote className="w-5 h-5" />} accent="#9333ea" />
+        </Link>
+        <Link href="/tenant/laundry/orders">
+          <StatCard title="New Orders" value={counts.Received} icon={<ShoppingBag className="w-5 h-5" />} />
+        </Link>
+        <Link href="/tenant/laundry/orders">
+          <StatCard title="Processing" value={counts.Processing} icon={<Clock className="w-5 h-5" />} />
+        </Link>
+        <Link href="/tenant/laundry/orders">
+          <StatCard title="Ready for Delivery" value={counts.Ready} icon={<Truck className="w-5 h-5" />} />
+        </Link>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
@@ -237,7 +322,15 @@ function LaundryDashboard() {
                   <div key={ord.id} className="bg-gray-50 border border-gray-200 rounded-lg p-2.5">
                     <p className="text-[10px] font-mono text-gray-500">{ord.id}</p>
                     <p className="text-xs font-medium text-gray-900 mt-0.5">{ord.customer}</p>
-                    <p className="text-[10px] text-gray-500">{ord.items ? `${ord.items} items` : `${ord.kg}kg`}</p>
+                    <p className="text-[10px] text-gray-500">{ord.items ? `${ord.items} items` : ""}</p>
+                    {stage !== "Delivered" && (
+                      <button
+                        onClick={() => handleMoveOrder(ord.id, stage)}
+                        className="mt-1.5 flex items-center gap-1 w-full justify-center px-2 py-1 bg-brand-500 text-white text-[10px] font-semibold rounded-md hover:bg-brand-600 transition-colors"
+                      >
+                        <ChevronRight className="w-3 h-3" /> {nextStage[stage] ? `Move to ${nextStage[stage]}` : "Done"}
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -252,13 +345,29 @@ function LaundryDashboard() {
 // ─── Tour Dashboard ───────────────────────────────────────────────────────
 
 function TourDashboard() {
+  const { state } = useDataStore();
+  const tourPackages = state.tourPackages;
+  const tourBookings = state.tourBookings;
+
+  const activeBookings = tourBookings.filter(b => b.status === "Confirmed" || b.status === "Pending").length;
+  const pendingRequests = tourBookings.filter(b => b.status === "Pending").length;
+  const revenueMonth = tourBookings.reduce((sum, b) => sum + (b.total || 0), 0);
+
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Monthly Revenue" value={`৳${(tourStats.revenueMonth/100000).toFixed(1)}L`} icon={<Banknote className="w-5 h-5" />} accent="#16a34a" />
-        <StatCard title="Active Bookings" value={tourStats.activeBookings} icon={<Users className="w-5 h-5" />} />
-        <StatCard title="Tours This Week" value={tourStats.toursThisWeek} icon={<Calendar className="w-5 h-5" />} />
-        <StatCard title="Pending Requests" value={tourStats.pendingRequests} subValue="review needed" icon={<AlertTriangle className="w-5 h-5" />} accent="#16a34a" />
+        <Link href="/tenant/accounts/transactions">
+          <StatCard title="Monthly Revenue" value={`৳${(revenueMonth/100000).toFixed(1)}L`} icon={<Banknote className="w-5 h-5" />} accent="#16a34a" />
+        </Link>
+        <Link href="/tenant/tour/bookings">
+          <StatCard title="Active Bookings" value={activeBookings} icon={<Users className="w-5 h-5" />} />
+        </Link>
+        <Link href="/tenant/tour/packages">
+          <StatCard title="Tour Packages" value={tourPackages.length} icon={<Calendar className="w-5 h-5" />} />
+        </Link>
+        <Link href="/tenant/tour/bookings">
+          <StatCard title="Pending Requests" value={pendingRequests} subValue="review needed" icon={<AlertTriangle className="w-5 h-5" />} accent="#16a34a" />
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -275,7 +384,7 @@ function TourDashboard() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-gray-900 truncate">{pkg.name}</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">{pkg.nextDeparture} · {pkg.duration}</p>
+                  <p className="text-[10px] text-gray-500 mt-0.5">{pkg.nextDate} · {pkg.duration}</p>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-xs font-bold text-gray-900">{pkg.booked}/{pkg.capacity}</p>
@@ -314,26 +423,32 @@ function TourDashboard() {
 // ─── Accounts Mini Widget ─────────────────────────────────────────────────
 
 function AccountsWidget() {
+  const { state } = useDataStore();
+  const transactions = state.transactions;
+
+  const totalCredit = transactions.filter(t => (t.type as string) === "credit" || (t.type as string) === "Income").reduce((s, t) => s + (t.credit || 0), 0);
+  const totalDebit = transactions.filter(t => (t.type as string) === "debit" || (t.type as string) === "Expense").reduce((s, t) => s + (t.debit || 0), 0);
+
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
       <h3 className="text-sm font-semibold text-gray-900 mb-3">Finance Overview</h3>
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-success-50 rounded-lg p-3 text-center">
+        <Link href="/tenant/accounts/transactions" className="bg-success-50 rounded-lg p-3 text-center hover:ring-2 hover:ring-success-300 transition-all">
           <p className="text-xs text-gray-500">Cash in Hand</p>
           <p className="text-base font-bold text-success-700">৳245K</p>
-        </div>
-        <div className="bg-brand-50 rounded-lg p-3 text-center">
+        </Link>
+        <Link href="/tenant/accounts/transactions" className="bg-brand-50 rounded-lg p-3 text-center hover:ring-2 hover:ring-brand-300 transition-all">
           <p className="text-xs text-gray-500">Bank Balance</p>
           <p className="text-base font-bold text-brand-700">৳18.4L</p>
-        </div>
-        <div className="bg-warning-50 rounded-lg p-3 text-center">
+        </Link>
+        <Link href="/tenant/accounts/transactions" className="bg-warning-50 rounded-lg p-3 text-center hover:ring-2 hover:ring-warning-300 transition-all">
           <p className="text-xs text-gray-500">Receivables</p>
           <p className="text-base font-bold text-warning-700">৳128K</p>
-        </div>
-        <div className="bg-danger-50 rounded-lg p-3 text-center">
+        </Link>
+        <Link href="/tenant/accounts/transactions" className="bg-danger-50 rounded-lg p-3 text-center hover:ring-2 hover:ring-danger-300 transition-all">
           <p className="text-xs text-gray-500">Payables</p>
           <p className="text-base font-bold text-danger-700">৳68K</p>
-        </div>
+        </Link>
       </div>
     </div>
   );

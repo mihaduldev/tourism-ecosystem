@@ -1,32 +1,22 @@
+"use client";
+
+import { useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, Calendar, CheckCircle, XCircle, Clock, Download } from "lucide-react";
-
-const leaveBalances = [
-  { type: "Casual Leave", total: 14, used: 6, pending: 1, remaining: 7, color: "bg-brand-500" },
-  { type: "Sick Leave", total: 14, used: 4, pending: 0, remaining: 10, color: "bg-danger-500" },
-  { type: "Annual Leave", total: 21, used: 8, pending: 2, remaining: 11, color: "bg-tour-500" },
-  { type: "Emergency Leave", total: 5, used: 1, pending: 0, remaining: 4, color: "bg-warning-500" },
-];
-
-const leaveRequests = [
-  { id: "LR-0124", employee: "Faruk Hossain", department: "Restaurant", type: "Casual", from: "Apr 24, 2026", to: "Apr 25, 2026", days: 2, reason: "Family function - cousin's wedding in Comilla", status: "Pending", appliedOn: "Apr 22, 2026" },
-  { id: "LR-0123", employee: "Rubina Akter", department: "Housekeeping", type: "Sick", from: "Apr 24, 2026", to: "Apr 24, 2026", days: 1, reason: "Fever and cold, doctor prescribed rest", status: "Pending", appliedOn: "Apr 24, 2026" },
-  { id: "LR-0122", employee: "Tanvir Rahman", department: "Front Office", type: "Annual", from: "May 01, 2026", to: "May 05, 2026", days: 5, reason: "Family vacation to Cox's Bazar", status: "Pending", appliedOn: "Apr 20, 2026" },
-  { id: "LR-0121", employee: "Sadia Islam", department: "Finance", type: "Emergency", from: "Apr 28, 2026", to: "Apr 28, 2026", days: 1, reason: "Mother hospitalized, need to be with her", status: "Pending", appliedOn: "Apr 24, 2026" },
-  { id: "LR-0120", employee: "Nasrin Khatun", department: "Restaurant", type: "Casual", from: "Apr 20, 2026", to: "Apr 21, 2026", days: 2, reason: "Personal errands and bank work", status: "Approved", appliedOn: "Apr 18, 2026" },
-  { id: "LR-0119", employee: "Jamal Mia", department: "Security", type: "Sick", from: "Apr 18, 2026", to: "Apr 19, 2026", days: 2, reason: "Food poisoning, resting at home", status: "Approved", appliedOn: "Apr 18, 2026" },
-  { id: "LR-0118", employee: "Shima Akter", department: "Housekeeping", type: "Casual", from: "Apr 15, 2026", to: "Apr 16, 2026", days: 2, reason: "Religious festival celebration", status: "Approved", appliedOn: "Apr 12, 2026" },
-  { id: "LR-0117", employee: "Rafiq Uddin", department: "Transport", type: "Annual", from: "Apr 10, 2026", to: "Apr 14, 2026", days: 5, reason: "Going to village home in Barishal", status: "Approved", appliedOn: "Apr 05, 2026" },
-  { id: "LR-0116", employee: "Habib Rahman", department: "Kitchen", type: "Sick", from: "Apr 08, 2026", to: "Apr 10, 2026", days: 3, reason: "Dengue fever, doctor advised complete rest", status: "Approved", appliedOn: "Apr 08, 2026" },
-  { id: "LR-0115", employee: "Zahid Hasan", department: "Kitchen", type: "Casual", from: "Apr 05, 2026", to: "Apr 05, 2026", days: 1, reason: "Need to attend court hearing", status: "Rejected", appliedOn: "Apr 03, 2026" },
-];
+import { Modal } from "@/components/ui/modal";
+import { FormField } from "@/components/ui/form-field";
+import { SearchInput } from "@/components/ui/search-input";
+import { SelectFilter } from "@/components/ui/select-filter";
+import { useDataStore } from "@/lib/state/data-store";
+import { useToast } from "@/lib/state/toast-context";
+import { useFilteredData } from "@/lib/hooks/use-filtered-data";
+import { Calendar, CheckCircle, XCircle, Clock, Download } from "lucide-react";
 
 const typeColors: Record<string, string> = {
-  Casual: "bg-brand-100 text-brand-700",
-  Sick: "bg-danger-100 text-danger-700",
-  Annual: "bg-tour-100 text-tour-700",
-  Emergency: "bg-warning-100 text-warning-700",
+  "Casual Leave": "bg-brand-100 text-brand-700",
+  "Sick Leave": "bg-danger-100 text-danger-700",
+  "Annual Leave": "bg-tour-100 text-tour-700",
+  "Emergency Leave": "bg-warning-100 text-warning-700",
 };
 
 const statusIcons: Record<string, React.ReactNode> = {
@@ -35,19 +25,132 @@ const statusIcons: Record<string, React.ReactNode> = {
   Rejected: <XCircle className="w-3.5 h-3.5 text-danger-500" />,
 };
 
+const leaveTypeOptions = [
+  { value: "Sick Leave", label: "Sick Leave" },
+  { value: "Casual Leave", label: "Casual Leave" },
+  { value: "Annual Leave", label: "Annual Leave" },
+  { value: "Emergency Leave", label: "Emergency Leave" },
+];
+
+const statusOptions = [
+  { value: "Pending", label: "Pending" },
+  { value: "Approved", label: "Approved" },
+  { value: "Rejected", label: "Rejected" },
+];
+
+const emptyForm = {
+  employeeId: "",
+  type: "",
+  from: "",
+  to: "",
+  reason: "",
+};
+
 export default function LeavePage() {
-  const pending = leaveRequests.filter(r => r.status === "Pending").length;
+  const { state, addItem, updateItem, generateId } = useDataStore();
+  const { addToast } = useToast();
+  const leaveRequests = state.leaveRequests;
+  const employees = state.employees;
+
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [showApply, setShowApply] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+
+  const filtered = useFilteredData(
+    leaveRequests,
+    search,
+    ["employeeName", "type", "reason"],
+    [
+      { field: "status", value: statusFilter },
+      { field: "type", value: typeFilter },
+    ],
+  );
+
+  const pending = useMemo(() => leaveRequests.filter((r: any) => r.status === "Pending"), [leaveRequests]);
+  const approved = useMemo(() => leaveRequests.filter((r: any) => r.status === "Approved"), [leaveRequests]);
+  const rejected = useMemo(() => leaveRequests.filter((r: any) => r.status === "Rejected"), [leaveRequests]);
+
+  // Leave balance summary (computed from data)
+  const leaveBalances = useMemo(() => {
+    const types = ["Casual Leave", "Sick Leave", "Annual Leave", "Emergency Leave"];
+    const totals: Record<string, number> = { "Casual Leave": 14, "Sick Leave": 14, "Annual Leave": 21, "Emergency Leave": 5 };
+    const colors: Record<string, string> = { "Casual Leave": "bg-brand-500", "Sick Leave": "bg-danger-500", "Annual Leave": "bg-tour-500", "Emergency Leave": "bg-warning-500" };
+
+    return types.map((type) => {
+      const reqs = leaveRequests.filter((r: any) => r.type === type);
+      const used = reqs.filter((r: any) => r.status === "Approved").reduce((a: number, r: any) => a + (r.days || 0), 0);
+      const pendingDays = reqs.filter((r: any) => r.status === "Pending").reduce((a: number, r: any) => a + (r.days || 0), 0);
+      const total = totals[type];
+      return { type, total, used, pending: pendingDays, remaining: total - used, color: colors[type] };
+    });
+  }, [leaveRequests]);
+
+  const employeeOptions = useMemo(() => {
+    return employees.filter((e: any) => e.status === "Active").map((e: any) => ({
+      value: e.id,
+      label: e.name,
+    }));
+  }, [employees]);
+
+  function handleApprove(id: string, name: string) {
+    updateItem("leaveRequests", id, { status: "Approved" });
+    addToast(`Leave request from ${name} approved`, "success");
+  }
+
+  function handleReject(id: string, name: string) {
+    updateItem("leaveRequests", id, { status: "Rejected" });
+    addToast(`Leave request from ${name} rejected`, "error");
+  }
+
+  function handleApplyLeave() {
+    if (!form.employeeId || !form.type || !form.from || !form.to) {
+      addToast("Please fill in all required fields", "error");
+      return;
+    }
+    const emp = employees.find((e: any) => e.id === form.employeeId);
+    if (!emp) {
+      addToast("Employee not found", "error");
+      return;
+    }
+    // Calculate days
+    const fromDate = new Date(form.from);
+    const toDate = new Date(form.to);
+    if (toDate < fromDate) {
+      addToast("End date must be after start date", "error");
+      return;
+    }
+    const days = Math.ceil((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+    const id = generateId("LR");
+    addItem("leaveRequests", {
+      id,
+      employeeId: emp.id,
+      employeeName: emp.name,
+      type: form.type,
+      from: new Date(form.from).toLocaleDateString("en-US", { month: "short", day: "2-digit" }),
+      to: new Date(form.to).toLocaleDateString("en-US", { month: "short", day: "2-digit" }),
+      days,
+      reason: form.reason || "No reason provided",
+      status: "Pending",
+    });
+    addToast(`Leave request for ${emp.name} submitted (${days} day${days > 1 ? "s" : ""})`, "success");
+    setForm(emptyForm);
+    setShowApply(false);
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Leave Management</h1>
-          <p className="text-sm text-gray-500">{leaveRequests.length} requests · {pending} pending approval</p>
+          <p className="text-sm text-gray-500">{leaveRequests.length} requests · {pending.length} pending approval</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm"><Download className="w-4 h-4" /> Export</Button>
-          <Button size="sm"><Calendar className="w-4 h-4" /> Apply Leave</Button>
+          <Button size="sm" onClick={() => { setForm(emptyForm); setShowApply(true); }}>
+            <Calendar className="w-4 h-4" /> Apply Leave
+          </Button>
         </div>
       </div>
 
@@ -79,52 +182,44 @@ export default function LeavePage() {
 
       {/* Filters */}
       <div className="flex gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" placeholder="Search by employee name..." className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-hr-500" />
-        </div>
-        <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-          <option>All Status</option>
-          <option>Pending</option>
-          <option>Approved</option>
-          <option>Rejected</option>
-        </select>
-        <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-          <option>All Types</option>
-          <option>Casual</option>
-          <option>Sick</option>
-          <option>Annual</option>
-          <option>Emergency</option>
-        </select>
+        <SearchInput value={search} onChange={setSearch} placeholder="Search by employee name..." className="flex-1 min-w-[200px]" />
+        <SelectFilter value={statusFilter} onChange={setStatusFilter} options={statusOptions} allLabel="All Status" />
+        <SelectFilter value={typeFilter} onChange={setTypeFilter} options={leaveTypeOptions} allLabel="All Types" />
       </div>
 
       {/* Pending Approvals - highlighted */}
-      {pending > 0 && (
+      {pending.length > 0 && (
         <div className="bg-warning-50 rounded-xl border border-warning-200 p-4">
           <h3 className="text-sm font-semibold text-warning-700 mb-3 flex items-center gap-2">
-            <Clock className="w-4 h-4" /> {pending} Pending Approvals
+            <Clock className="w-4 h-4" /> {pending.length} Pending Approval{pending.length > 1 ? "s" : ""}
           </h3>
           <div className="space-y-2">
-            {leaveRequests.filter(r => r.status === "Pending").map((req) => (
+            {pending.map((req: any) => (
               <div key={req.id} className="bg-white rounded-lg border border-warning-100 p-3 flex flex-col sm:flex-row sm:items-center gap-3">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="w-8 h-8 bg-hr-100 rounded-full flex items-center justify-center text-hr-700 text-xs font-bold shrink-0">
-                    {req.employee.charAt(0)}
+                    {req.employeeName.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm font-medium text-gray-900">{req.employee}</p>
-                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${typeColors[req.type]}`}>{req.type}</span>
+                      <p className="text-sm font-medium text-gray-900">{req.employeeName}</p>
+                      <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${typeColors[req.type] || "bg-gray-100 text-gray-600"}`}>{req.type}</span>
                     </div>
                     <p className="text-xs text-gray-500">{req.from} → {req.to} ({req.days} day{req.days > 1 ? "s" : ""})</p>
                     <p className="text-xs text-gray-400 mt-0.5 truncate">{req.reason}</p>
                   </div>
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  <button className="px-3 py-1.5 bg-success-500 text-white rounded-lg text-xs font-medium hover:bg-success-600 flex items-center gap-1">
+                  <button
+                    onClick={() => handleApprove(req.id, req.employeeName)}
+                    className="px-3 py-1.5 bg-success-500 text-white rounded-lg text-xs font-medium hover:bg-success-600 flex items-center gap-1"
+                  >
                     <CheckCircle className="w-3 h-3" /> Approve
                   </button>
-                  <button className="px-3 py-1.5 bg-danger-500 text-white rounded-lg text-xs font-medium hover:bg-danger-600 flex items-center gap-1">
+                  <button
+                    onClick={() => handleReject(req.id, req.employeeName)}
+                    className="px-3 py-1.5 bg-danger-500 text-white rounded-lg text-xs font-medium hover:bg-danger-600 flex items-center gap-1"
+                  >
                     <XCircle className="w-3 h-3" /> Reject
                   </button>
                 </div>
@@ -137,7 +232,7 @@ export default function LeavePage() {
       {/* Leave History Table */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100">
-          <h3 className="text-sm font-semibold text-gray-900">Leave History</h3>
+          <h3 className="text-sm font-semibold text-gray-900">Leave History ({filtered.length} records)</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -151,18 +246,23 @@ export default function LeavePage() {
                 <th className="px-4 py-2.5 text-center text-xs font-medium text-gray-500 uppercase">Days</th>
                 <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">Reason</th>
                 <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {leaveRequests.map((req) => (
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={9} className="px-5 py-8 text-center text-sm text-gray-400">No leave requests found.</td>
+                </tr>
+              )}
+              {filtered.map((req: any) => (
                 <tr key={req.id} className="hover:bg-gray-50">
                   <td className="px-5 py-3 text-sm font-mono text-gray-500">{req.id}</td>
                   <td className="px-4 py-3">
-                    <p className="text-sm font-medium text-gray-900">{req.employee}</p>
-                    <p className="text-[10px] text-gray-400">{req.department}</p>
+                    <p className="text-sm font-medium text-gray-900">{req.employeeName}</p>
                   </td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded ${typeColors[req.type]}`}>{req.type}</span>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded ${typeColors[req.type] || "bg-gray-100 text-gray-600"}`}>{req.type}</span>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600 hidden sm:table-cell">{req.from}</td>
                   <td className="px-4 py-3 text-sm text-gray-600 hidden sm:table-cell">{req.to}</td>
@@ -178,12 +278,87 @@ export default function LeavePage() {
                       {req.status}
                     </span>
                   </td>
+                  <td className="px-4 py-3">
+                    {req.status === "Pending" ? (
+                      <div className="flex gap-1 justify-end">
+                        <button
+                          onClick={() => handleApprove(req.id, req.employeeName)}
+                          className="px-2 py-1 bg-success-50 text-success-600 rounded text-[10px] font-medium hover:bg-success-100 flex items-center gap-0.5"
+                        >
+                          <CheckCircle className="w-3 h-3" /> Approve
+                        </button>
+                        <button
+                          onClick={() => handleReject(req.id, req.employeeName)}
+                          className="px-2 py-1 bg-danger-50 text-danger-600 rounded text-[10px] font-medium hover:bg-danger-100 flex items-center gap-0.5"
+                        >
+                          <XCircle className="w-3 h-3" /> Reject
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-[10px] text-gray-400 text-right block">—</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Apply Leave Modal */}
+      <Modal
+        open={showApply}
+        onClose={() => setShowApply(false)}
+        title="Apply for Leave"
+        size="md"
+        footer={
+          <>
+            <Button variant="ghost" size="sm" onClick={() => setShowApply(false)}>Cancel</Button>
+            <Button size="sm" onClick={handleApplyLeave}>Submit Request</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <FormField
+            label="Employee"
+            required
+            options={employeeOptions}
+            value={form.employeeId}
+            onChange={(v) => setForm({ ...form, employeeId: v })}
+          />
+          <FormField
+            label="Leave Type"
+            required
+            options={leaveTypeOptions}
+            value={form.type}
+            onChange={(v) => setForm({ ...form, type: v })}
+          />
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              label="From Date"
+              required
+              type="date"
+              value={form.from}
+              onChange={(v) => setForm({ ...form, from: v })}
+            />
+            <FormField
+              label="To Date"
+              required
+              type="date"
+              value={form.to}
+              onChange={(v) => setForm({ ...form, to: v })}
+            />
+          </div>
+          <FormField
+            label="Reason"
+            textarea
+            rows={3}
+            value={form.reason}
+            onChange={(v) => setForm({ ...form, reason: v })}
+            placeholder="Briefly describe the reason for leave..."
+          />
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -92,9 +92,9 @@ export const MODULE_CONFIGS: Record<string, { label: string; color: string; icon
 };
 
 export const TENANT_MODULE_MAP: Record<string, string[]> = {
-  hotel: ["hotel", "restaurant", "laundry", "accounts", "inventory"],
-  restaurant: ["restaurant", "inventory", "accounts"],
+  hotel: ["hotel", "restaurant", "laundry", "booking", "accounts", "hr", "inventory"],
+  restaurant: ["restaurant", "booking", "inventory", "accounts"],
   laundry: ["laundry", "accounts"],
-  tour: ["tour", "ticketing", "accounts", "crm"],
-  mixed: ["hotel", "tour", "ticketing", "accounts"],
+  tour: ["tour", "ticketing", "booking", "accounts", "crm"],
+  mixed: ["hotel", "tour", "ticketing", "booking", "accounts", "hr"],
 };

@@ -90,6 +90,7 @@ const MODULE_NAVS: Record<string, { label: string; color: string; icon: React.FC
     color: "#0891B2",
     icon: Users,
     items: [
+      { label: "Overview", href: "/tenant/hr", icon: LayoutDashboard },
       { label: "Employees", href: "/tenant/hr/employees", icon: Users },
       { label: "Attendance", href: "/tenant/hr/attendance", icon: UserCheck },
       { label: "Leave", href: "/tenant/hr/leave", icon: Calendar },
@@ -100,8 +101,30 @@ const MODULE_NAVS: Record<string, { label: string; color: string; icon: React.FC
     color: "#DC2626",
     icon: Package,
     items: [
+      { label: "Overview", href: "/tenant/inventory", icon: LayoutDashboard },
       { label: "Stock", href: "/tenant/inventory/stock", icon: Package },
       { label: "Purchase Orders", href: "/tenant/inventory/purchase", icon: ShoppingCart },
+    ],
+  },
+  crm: {
+    label: "CRM",
+    color: "#475569",
+    icon: HeartHandshake,
+    items: [
+      { label: "Overview", href: "/tenant/crm", icon: LayoutDashboard },
+      { label: "Contacts", href: "/tenant/crm/contacts", icon: Users },
+      { label: "Pipeline", href: "/tenant/crm/pipeline", icon: BarChart2 },
+    ],
+  },
+  booking: {
+    label: "Booking Engine",
+    color: "#2563EB",
+    icon: CalendarCheck,
+    items: [
+      { label: "Overview", href: "/tenant/booking", icon: LayoutDashboard },
+      { label: "Channels", href: "/tenant/booking/channels", icon: Globe },
+      { label: "Widget", href: "/tenant/booking/widget", icon: Settings },
+      { label: "Calendar", href: "/tenant/booking/calendar", icon: Calendar },
     ],
   },
 };

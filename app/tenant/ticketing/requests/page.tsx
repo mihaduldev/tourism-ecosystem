@@ -1,23 +1,96 @@
+"use client";
+
+import { useState } from "react";
+import { useDataStore } from "@/lib/state/data-store";
+import { useToast } from "@/lib/state/toast-context";
+import { useFilteredData } from "@/lib/hooks/use-filtered-data";
 import { StatusBadge, Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Download, Plane } from "lucide-react";
+import { Modal } from "@/components/ui/modal";
+import { FormField } from "@/components/ui/form-field";
+import { SearchInput } from "@/components/ui/search-input";
+import { SelectFilter } from "@/components/ui/select-filter";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Plus, Download, Plane } from "lucide-react";
 
-const requests = [
-  { id: "TKR-0891", passenger: "Mohammed Rahim", phone: "01711-234567", route: "DAC → DXB", travelDate: "May 05, 2026", returnDate: "May 15, 2026", class: "Economy", pax: 1, amount: 42000, commission: 2100, airline: "Emirates", status: "New" },
-  { id: "TKR-0890", passenger: "Sara Islam", phone: "01812-345678", route: "DAC → SIN", travelDate: "May 12, 2026", returnDate: "May 18, 2026", class: "Business", pax: 1, amount: 128000, commission: 6400, airline: "Singapore Airlines", status: "Processing" },
-  { id: "TKR-0889", passenger: "Tanvir Hossain", phone: "01912-567890", route: "DAC → BKK", travelDate: "May 08, 2026", returnDate: null, class: "Economy", pax: 1, amount: 35000, commission: 1750, airline: "Thai Airways", status: "Issued" },
-  { id: "TKR-0888", passenger: "Nadia Begum", phone: "01312-890123", route: "DAC → KUL", travelDate: "May 15, 2026", returnDate: "May 22, 2026", class: "Economy", pax: 4, amount: 156000, commission: 7800, airline: "Biman Bangladesh", status: "New" },
-  { id: "TKR-0887", passenger: "Karim Ahmed", phone: "01711-111111", route: "DAC → DEL", travelDate: "Apr 28, 2026", returnDate: "May 03, 2026", class: "Economy", pax: 2, amount: 28000, commission: 1400, airline: "IndiGo", status: "Issued" },
-  { id: "TKR-0886", passenger: "Rezaul Islam", phone: "01611-222333", route: "DAC → DOH", travelDate: "May 01, 2026", returnDate: null, class: "Economy", pax: 1, amount: 52000, commission: 2600, airline: "Qatar Airways", status: "Processing" },
-  { id: "TKR-0885", passenger: "Fatema Khatun", phone: "01611-678901", route: "DAC → CCU", travelDate: "Apr 30, 2026", returnDate: "May 02, 2026", class: "Economy", pax: 1, amount: 15000, commission: 750, airline: "US-Bangla Airlines", status: "Issued" },
-  { id: "TKR-0884", passenger: "Ahmed Hossain", phone: "01511-789012", route: "DAC → LHR", travelDate: "May 20, 2026", returnDate: "Jun 10, 2026", class: "Business", pax: 1, amount: 245000, commission: 12250, airline: "Biman Bangladesh", status: "New" },
-  { id: "TKR-0883", passenger: "Rashida Begum", phone: "01811-444555", route: "DAC → JED", travelDate: "May 10, 2026", returnDate: null, class: "Economy", pax: 2, amount: 96000, commission: 4800, airline: "Saudi Airlines", status: "Processing" },
-  { id: "TKR-0882", passenger: "Imran Sheikh", phone: "01911-666777", route: "DAC → DXB", travelDate: "Apr 25, 2026", returnDate: "May 05, 2026", class: "Economy", pax: 1, amount: 38000, commission: 1900, airline: "Air Arabia", status: "Issued" },
-  { id: "TKR-0881", passenger: "Ritu Akhter", phone: "01711-888999", route: "DAC → SIN", travelDate: "Apr 20, 2026", returnDate: "Apr 27, 2026", class: "Economy", pax: 2, amount: 82000, commission: 4100, airline: "Biman Bangladesh", status: "Cancelled" },
-];
+function mockPNR() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  return Array.from({ length: 6 }, () => chars[Math.floor(Math.random() * 26)]).join("");
+}
+
+const airlines = ["Biman Bangladesh", "Emirates", "Qatar Airways", "Singapore Airlines", "Thai Airways", "Air Arabia", "US-Bangla Airlines", "IndiGo", "Saudi Airlines"];
+
+const emptyForm = { passenger: "", route: "", travelDate: "", class: "Economy", amount: "", airline: "" };
 
 export default function TicketRequestsPage() {
-  const totalCommission = requests.filter(r => r.status !== "Cancelled").reduce((a, r) => a + r.commission, 0);
+  const { state, addItem, updateItem, generateId } = useDataStore();
+  const { addToast } = useToast();
+  const requests = state.ticketRequests;
+
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [classFilter, setClassFilter] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+  const [pnrModal, setPnrModal] = useState<string | null>(null);
+  const [confirmCancel, setConfirmCancel] = useState<string | null>(null);
+
+  const filtered = useFilteredData(requests, search, ["id", "passenger", "route", "airline", "pnr"], [
+    { field: "status", value: statusFilter },
+    { field: "class", value: classFilter },
+  ]);
+
+  const totalCommission = requests.filter((r) => r.status !== "Cancelled").reduce((a, r) => a + r.commission, 0);
+
+  function openCreate() {
+    setForm(emptyForm);
+    setModalOpen(true);
+  }
+
+  function handleSave() {
+    if (!form.passenger || !form.route) {
+      addToast("Passenger and route are required", "error");
+      return;
+    }
+    const amount = parseInt(form.amount) || 0;
+    addItem("ticketRequests", {
+      id: generateId("TKR"),
+      passenger: form.passenger,
+      route: form.route,
+      travelDate: form.travelDate,
+      class: form.class,
+      amount,
+      commission: Math.round(amount * 0.05),
+      status: "New",
+      airline: form.airline || undefined,
+    });
+    addToast("Ticket request created");
+    setModalOpen(false);
+  }
+
+  function handleProcess(id: string) {
+    updateItem("ticketRequests", id, { status: "Processing" });
+    addToast("Request moved to Processing");
+  }
+
+  function handleIssue(id: string) {
+    const pnr = mockPNR();
+    const req = requests.find((r) => r.id === id);
+    updateItem("ticketRequests", id, {
+      status: "Issued",
+      pnr,
+      airline: req?.airline || "Biman Bangladesh",
+    });
+    addToast(`Ticket issued with PNR: ${pnr}`);
+  }
+
+  function handleCancel(id: string) {
+    updateItem("ticketRequests", id, { status: "Cancelled" });
+    addToast("Request cancelled");
+    setConfirmCancel(null);
+  }
+
+  const viewPnrReq = requests.find((r) => r.id === pnrModal);
 
   return (
     <div className="max-w-7xl mx-auto space-y-5">
@@ -28,38 +101,33 @@ export default function TicketRequestsPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" size="sm"><Download className="w-4 h-4" /> Export</Button>
-          <Button size="sm"><Plus className="w-4 h-4" /> New Request</Button>
+          <Button size="sm" onClick={openCreate}><Plus className="w-4 h-4" /> New Request</Button>
         </div>
       </div>
 
       {/* Filters */}
       <div className="flex gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" placeholder="Search by passenger, request ID, or route..." className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ticketing-500" />
-        </div>
-        <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-          <option>All Status</option>
-          <option>New</option>
-          <option>Processing</option>
-          <option>Issued</option>
-          <option>Cancelled</option>
-        </select>
-        <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-          <option>All Classes</option>
-          <option>Economy</option>
-          <option>Business</option>
-          <option>First</option>
-        </select>
+        <SearchInput value={search} onChange={setSearch} placeholder="Search by passenger, request ID, or route..." className="flex-1 min-w-[200px]" />
+        <SelectFilter value={statusFilter} onChange={setStatusFilter} allLabel="All Status" options={[
+          { value: "New", label: "New" },
+          { value: "Processing", label: "Processing" },
+          { value: "Issued", label: "Issued" },
+          { value: "Cancelled", label: "Cancelled" },
+        ]} />
+        <SelectFilter value={classFilter} onChange={setClassFilter} allLabel="All Classes" options={[
+          { value: "Economy", label: "Economy" },
+          { value: "Business", label: "Business" },
+          { value: "First", label: "First" },
+        ]} />
       </div>
 
       {/* Summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: "New", count: requests.filter(r => r.status === "New").length, color: "text-warning-600 bg-warning-50" },
-          { label: "Processing", count: requests.filter(r => r.status === "Processing").length, color: "text-brand-600 bg-brand-50" },
-          { label: "Issued", count: requests.filter(r => r.status === "Issued").length, color: "text-success-600 bg-success-50" },
-          { label: "Cancelled", count: requests.filter(r => r.status === "Cancelled").length, color: "text-danger-600 bg-danger-50" },
+          { label: "New", count: requests.filter((r) => r.status === "New").length, color: "text-warning-600 bg-warning-50" },
+          { label: "Processing", count: requests.filter((r) => r.status === "Processing").length, color: "text-brand-600 bg-brand-50" },
+          { label: "Issued", count: requests.filter((r) => r.status === "Issued").length, color: "text-success-600 bg-success-50" },
+          { label: "Cancelled", count: requests.filter((r) => r.status === "Cancelled").length, color: "text-danger-600 bg-danger-50" },
         ].map((s) => (
           <div key={s.label} className={`rounded-xl p-3 text-center ${s.color}`}>
             <p className="text-xl font-bold">{s.count}</p>
@@ -79,7 +147,6 @@ export default function TicketRequestsPage() {
                 <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase">Route</th>
                 <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Travel Date</th>
                 <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Class</th>
-                <th className="px-4 py-2.5 text-center text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">Pax</th>
                 <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 uppercase">Amount</th>
                 <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Commission</th>
                 <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -87,41 +154,122 @@ export default function TicketRequestsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {requests.map((req) => (
+              {filtered.map((req) => (
                 <tr key={req.id} className="hover:bg-gray-50">
                   <td className="px-5 py-3 text-sm font-mono text-gray-600">{req.id}</td>
                   <td className="px-4 py-3">
                     <p className="text-sm font-medium text-gray-900">{req.passenger}</p>
-                    <p className="text-xs text-gray-500">{req.phone}</p>
+                    {req.airline && <p className="text-xs text-gray-500">{req.airline}</p>}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1.5">
                       <Plane className="w-3 h-3 text-ticketing-500" />
                       <span className="text-sm font-mono font-medium text-ticketing-700">{req.route}</span>
                     </div>
-                    {req.returnDate && <p className="text-[10px] text-gray-400 mt-0.5">Return: {req.returnDate}</p>}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600 hidden md:table-cell">{req.travelDate}</td>
                   <td className="px-4 py-3 hidden sm:table-cell">
-                    <Badge variant={req.class === "Business" ? "info" : "secondary"}>{req.class}</Badge>
+                    <Badge variant={req.class === "Business" ? "info" : req.class === "First" ? "warning" : "secondary"}>{req.class}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-center text-sm font-medium text-gray-900 hidden lg:table-cell">{req.pax}</td>
                   <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">৳{req.amount.toLocaleString()}</td>
                   <td className="px-4 py-3 text-sm text-right hidden sm:table-cell">
                     <span className="text-success-600 font-medium">৳{req.commission.toLocaleString()}</span>
                   </td>
                   <td className="px-4 py-3"><StatusBadge status={req.status} /></td>
                   <td className="px-4 py-3">
-                    {req.status === "New" && <button className="text-xs text-ticketing-600 hover:underline font-medium">Process</button>}
-                    {req.status === "Processing" && <button className="text-xs text-success-600 hover:underline font-medium">Issue</button>}
-                    {req.status === "Issued" && <button className="text-xs text-gray-500 hover:underline font-medium">View PNR</button>}
+                    <div className="flex items-center gap-2">
+                      {req.status === "New" && (
+                        <>
+                          <button onClick={() => handleProcess(req.id)} className="text-xs text-ticketing-600 hover:underline font-medium">Process</button>
+                          <button onClick={() => setConfirmCancel(req.id)} className="text-xs text-danger-600 hover:underline font-medium">Cancel</button>
+                        </>
+                      )}
+                      {req.status === "Processing" && (
+                        <>
+                          <button onClick={() => handleIssue(req.id)} className="text-xs text-success-600 hover:underline font-medium">Issue</button>
+                          <button onClick={() => setConfirmCancel(req.id)} className="text-xs text-danger-600 hover:underline font-medium">Cancel</button>
+                        </>
+                      )}
+                      {req.status === "Issued" && req.pnr && (
+                        <button onClick={() => setPnrModal(req.id)} className="text-xs text-ticketing-600 hover:underline font-medium">View PNR</button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
+              {filtered.length === 0 && (
+                <tr><td colSpan={9} className="text-center py-8 text-sm text-gray-400">No requests found</td></tr>
+              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* New Request Modal */}
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="New Ticket Request"
+        size="lg"
+        footer={
+          <>
+            <Button variant="ghost" size="sm" onClick={() => setModalOpen(false)}>Cancel</Button>
+            <Button size="sm" onClick={handleSave}>Create Request</Button>
+          </>
+        }
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField label="Passenger Name" required value={form.passenger} onChange={(v) => setForm({ ...form, passenger: v })} placeholder="Full name as on passport" />
+          <FormField label="Route" required value={form.route} onChange={(v) => setForm({ ...form, route: v })} placeholder="e.g. DAC → DXB" />
+          <FormField label="Travel Date" value={form.travelDate} onChange={(v) => setForm({ ...form, travelDate: v })} placeholder="May 10, 2026" />
+          <FormField label="Class" value={form.class} onChange={(v) => setForm({ ...form, class: v })} options={[
+            { value: "Economy", label: "Economy" },
+            { value: "Business", label: "Business" },
+            { value: "First", label: "First Class" },
+          ]} />
+          <FormField label="Amount" type="number" value={form.amount} onChange={(v) => setForm({ ...form, amount: v })} placeholder="Ticket price" />
+          <FormField label="Preferred Airline" value={form.airline} onChange={(v) => setForm({ ...form, airline: v })} options={
+            airlines.map((a) => ({ value: a, label: a }))
+          } />
+        </div>
+      </Modal>
+
+      {/* PNR Detail Modal */}
+      <Modal
+        open={!!pnrModal}
+        onClose={() => setPnrModal(null)}
+        title="PNR Details"
+        size="sm"
+        footer={<Button variant="ghost" size="sm" onClick={() => setPnrModal(null)}>Close</Button>}
+      >
+        {viewPnrReq && (
+          <div className="space-y-3">
+            <div className="bg-ticketing-50 rounded-lg p-4 text-center">
+              <p className="text-xs text-ticketing-600 mb-1">PNR Code</p>
+              <p className="text-2xl font-mono font-bold text-ticketing-700 tracking-widest">{viewPnrReq.pnr}</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div><span className="text-gray-500 text-xs">Passenger</span><p className="font-medium">{viewPnrReq.passenger}</p></div>
+              <div><span className="text-gray-500 text-xs">Route</span><p className="font-medium font-mono">{viewPnrReq.route}</p></div>
+              <div><span className="text-gray-500 text-xs">Airline</span><p className="font-medium">{viewPnrReq.airline}</p></div>
+              <div><span className="text-gray-500 text-xs">Travel Date</span><p className="font-medium">{viewPnrReq.travelDate}</p></div>
+              <div><span className="text-gray-500 text-xs">Class</span><p className="font-medium">{viewPnrReq.class}</p></div>
+              <div><span className="text-gray-500 text-xs">Amount</span><p className="font-medium">৳{viewPnrReq.amount.toLocaleString()}</p></div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Cancel Confirm */}
+      <ConfirmDialog
+        open={!!confirmCancel}
+        onClose={() => setConfirmCancel(null)}
+        onConfirm={() => confirmCancel && handleCancel(confirmCancel)}
+        title="Cancel Request"
+        message="Are you sure you want to cancel this ticket request?"
+        confirmLabel="Cancel Request"
+        variant="danger"
+      />
     </div>
   );
 }

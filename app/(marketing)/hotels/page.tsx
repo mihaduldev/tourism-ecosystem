@@ -1,3 +1,6 @@
+"use client";
+
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { featuredHotels } from "@/lib/demo-data";
 import { Star, ShieldCheck, Search, SlidersHorizontal, MapPin } from "lucide-react";
@@ -9,21 +12,63 @@ const allHotels = [
   { slug: "hotel-saint-martin", name: "Saint Martin Resort", location: "Saint Martin Island", stars: 3, rating: 4.5, reviews: 78, priceFrom: 2500, image: "🏝", amenities: ["Beach", "Restaurant", "WiFi"], badge: "Island", verified: false },
 ];
 
+type SortOption = "recommended" | "price-low" | "price-high" | "rating";
+
 export default function HotelsSearchPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("recommended");
+  const [checkInDate, setCheckInDate] = useState("2026-04-26");
+  const [checkOutDate, setCheckOutDate] = useState("2026-04-29");
+  const [guests, setGuests] = useState("2 Guests");
+
+  const filteredHotels = useMemo(() => {
+    let results = allHotels;
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      results = results.filter(
+        h => h.name.toLowerCase().includes(q) || h.location.toLowerCase().includes(q)
+      );
+    }
+
+    // Sort
+    switch (sortBy) {
+      case "price-low":
+        results = [...results].sort((a, b) => a.priceFrom - b.priceFrom);
+        break;
+      case "price-high":
+        results = [...results].sort((a, b) => b.priceFrom - a.priceFrom);
+        break;
+      case "rating":
+        results = [...results].sort((a, b) => b.rating - a.rating);
+        break;
+      default:
+        // recommended — keep original order
+        break;
+    }
+
+    return results;
+  }, [searchQuery, sortBy]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Hotels</h1>
-          <p className="text-sm text-gray-500">{allHotels.length} properties found</p>
+          <p className="text-sm text-gray-500">{filteredHotels.length} properties found</p>
         </div>
         <div className="flex items-center gap-2">
-          <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-            <option>Sort: Recommended</option>
-            <option>Price: Low to High</option>
-            <option>Price: High to Low</option>
-            <option>Rating</option>
+          <select
+            value={sortBy}
+            onChange={e => setSortBy(e.target.value as SortOption)}
+            className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
+          >
+            <option value="recommended">Sort: Recommended</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+            <option value="rating">Rating</option>
           </select>
           <button className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-600 hover:bg-gray-50">
             <SlidersHorizontal className="w-4 h-4" /> Filters
@@ -35,21 +80,50 @@ export default function HotelsSearchPage() {
       <div className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm flex flex-col sm:flex-row gap-2 mb-6">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" placeholder="Search destination or hotel..." className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+          <input
+            type="text"
+            placeholder="Search destination or hotel..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
         </div>
-        <input type="date" defaultValue="2026-04-26" className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm" />
-        <input type="date" defaultValue="2026-04-29" className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm" />
-        <select className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white">
-          <option>2 Guests</option><option>1 Guest</option><option>3 Guests</option><option>4 Guests</option>
+        <input
+          type="date"
+          value={checkInDate}
+          onChange={e => setCheckInDate(e.target.value)}
+          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm"
+        />
+        <input
+          type="date"
+          value={checkOutDate}
+          onChange={e => setCheckOutDate(e.target.value)}
+          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm"
+        />
+        <select
+          value={guests}
+          onChange={e => setGuests(e.target.value)}
+          className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white"
+        >
+          <option>1 Guest</option><option>2 Guests</option><option>3 Guests</option><option>4 Guests</option>
         </select>
-        <button className="px-6 py-2.5 bg-brand-500 text-white rounded-xl text-sm font-semibold hover:bg-brand-400">
+        <button
+          onClick={() => {/* filtering is already live */}}
+          className="px-6 py-2.5 bg-brand-500 text-white rounded-xl text-sm font-semibold hover:bg-brand-400"
+        >
           Search
         </button>
       </div>
 
       {/* Results */}
       <div className="space-y-4">
-        {allHotels.map((hotel) => (
+        {filteredHotels.length === 0 && (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-sm">No hotels found matching "{searchQuery}"</p>
+            <button onClick={() => setSearchQuery("")} className="text-brand-600 text-sm font-medium mt-2 hover:underline">Clear search</button>
+          </div>
+        )}
+        {filteredHotels.map((hotel) => (
           <Link key={hotel.slug} href={`/hotels/${hotel.slug}`}
             className="flex flex-col sm:flex-row bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all group">
             {/* Image */}

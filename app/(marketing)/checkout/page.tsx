@@ -151,7 +151,7 @@ export default function CheckoutPage() {
 
               <div className="flex gap-3 justify-center pt-2">
                 <Link href="/"><Button variant="secondary">Back to Home</Button></Link>
-                <Button>View My Bookings</Button>
+                <Link href="/account/bookings"><Button>View My Bookings</Button></Link>
               </div>
             </div>
           )}

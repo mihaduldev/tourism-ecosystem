@@ -1,112 +1,132 @@
+"use client";
+
+import { useState } from "react";
+import { useToast } from "@/lib/state/toast-context";
+import { useFilteredData } from "@/lib/hooks/use-filtered-data";
 import { StatusBadge, Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Truck, MapPin, Phone, Clock, Package, Filter } from "lucide-react";
+import { Modal } from "@/components/ui/modal";
+import { FormField } from "@/components/ui/form-field";
+import { SearchInput } from "@/components/ui/search-input";
+import { SelectFilter } from "@/components/ui/select-filter";
+import { Plus, Truck, MapPin, Phone, Clock, Package } from "lucide-react";
 
-const pickups = [
-  {
-    id: "PU-0401",
-    customer: "Karim Ahmed",
-    address: "House 12, Road 5, Dhanmondi, Dhaka",
-    phone: "01711-111111",
-    items: 5,
-    scheduledTime: "Today 2:00 PM",
-    driver: "Sumon Ali",
-    status: "En Route",
-    notes: "Gate code: 4521",
-  },
-  {
-    id: "PU-0402",
-    customer: "Nasrin Akter",
-    address: "Flat 4B, Green Valley, Mirpur-10, Dhaka",
-    phone: "01211-777777",
-    items: 7,
-    scheduledTime: "Today 4:00 PM",
-    driver: "Ripon Das",
-    status: "Scheduled",
-    notes: "",
-  },
-  {
-    id: "PU-0403",
-    customer: "Farhan Ahmed",
-    address: "House 45, Block D, Bashundhara R/A, Dhaka",
-    phone: "01911-888888",
-    items: 12,
-    scheduledTime: "Today 6:00 PM",
-    driver: null,
-    status: "Scheduled",
-    notes: "Bulk laundry - bring extra bags",
-  },
-  {
-    id: "PU-0404",
-    customer: "Moni Ali",
-    address: "House 8, Road 14, Uttara Sector 3, Dhaka",
-    phone: "01611-444444",
-    items: 4,
-    scheduledTime: "Today 3:30 PM",
-    driver: "Sumon Ali",
-    status: "Picked Up",
-    notes: "",
-  },
-  {
-    id: "PU-0405",
-    customer: "Rashida Begum",
-    address: "Flat 7A, Orchid Tower, Banani, Dhaka",
-    phone: "01511-999888",
-    items: 6,
-    scheduledTime: "Tomorrow 10:00 AM",
-    driver: null,
-    status: "Scheduled",
-    notes: "Call 15 min before arrival",
-  },
-  {
-    id: "PU-0406",
-    customer: "Imran Hossain",
-    address: "House 22, Road 8, Gulshan-2, Dhaka",
-    phone: "01811-222333",
-    items: 3,
-    scheduledTime: "Tomorrow 11:30 AM",
-    driver: "Ripon Das",
-    status: "Scheduled",
-    notes: "",
-  },
-  {
-    id: "PU-0407",
-    customer: "Fatema Khatun",
-    address: "House 3, Mohakhali DOHS, Dhaka",
-    phone: "01611-678901",
-    items: 8,
-    scheduledTime: "Yesterday 3:00 PM",
-    driver: "Sumon Ali",
-    status: "Picked Up",
-    notes: "",
-  },
-  {
-    id: "PU-0408",
-    customer: "Zahir Uddin",
-    address: "Flat 2C, Trust Milonayatan, Farmgate, Dhaka",
-    phone: "01711-445566",
-    items: 5,
-    scheduledTime: "Apr 22, 4:00 PM",
-    driver: "Ripon Das",
-    status: "Cancelled",
-    notes: "Customer unavailable",
-  },
+interface Pickup {
+  id: string;
+  customer: string;
+  address: string;
+  phone: string;
+  items: number;
+  scheduledTime: string;
+  driver: string | null;
+  status: string;
+  notes: string;
+}
+
+const initialPickups: Pickup[] = [
+  { id: "PU-0401", customer: "Karim Ahmed", address: "House 12, Road 5, Dhanmondi, Dhaka", phone: "01711-111111", items: 5, scheduledTime: "Today 2:00 PM", driver: "Sumon Ali", status: "En Route", notes: "Gate code: 4521" },
+  { id: "PU-0402", customer: "Nasrin Akter", address: "Flat 4B, Green Valley, Mirpur-10, Dhaka", phone: "01211-777777", items: 7, scheduledTime: "Today 4:00 PM", driver: "Ripon Das", status: "Scheduled", notes: "" },
+  { id: "PU-0403", customer: "Farhan Ahmed", address: "House 45, Block D, Bashundhara R/A, Dhaka", phone: "01911-888888", items: 12, scheduledTime: "Today 6:00 PM", driver: null, status: "Scheduled", notes: "Bulk laundry - bring extra bags" },
+  { id: "PU-0404", customer: "Moni Ali", address: "House 8, Road 14, Uttara Sector 3, Dhaka", phone: "01611-444444", items: 4, scheduledTime: "Today 3:30 PM", driver: "Sumon Ali", status: "Picked Up", notes: "" },
+  { id: "PU-0405", customer: "Rashida Begum", address: "Flat 7A, Orchid Tower, Banani, Dhaka", phone: "01511-999888", items: 6, scheduledTime: "Tomorrow 10:00 AM", driver: null, status: "Scheduled", notes: "Call 15 min before arrival" },
+  { id: "PU-0406", customer: "Imran Hossain", address: "House 22, Road 8, Gulshan-2, Dhaka", phone: "01811-222333", items: 3, scheduledTime: "Tomorrow 11:30 AM", driver: "Ripon Das", status: "Scheduled", notes: "" },
+  { id: "PU-0407", customer: "Fatema Khatun", address: "House 3, Mohakhali DOHS, Dhaka", phone: "01611-678901", items: 8, scheduledTime: "Yesterday 3:00 PM", driver: "Sumon Ali", status: "Picked Up", notes: "" },
+  { id: "PU-0408", customer: "Zahir Uddin", address: "Flat 2C, Trust Milonayatan, Farmgate, Dhaka", phone: "01711-445566", items: 5, scheduledTime: "Apr 22, 4:00 PM", driver: "Ripon Das", status: "Cancelled", notes: "Customer unavailable" },
 ];
 
-const drivers = [
-  { name: "Sumon Ali", phone: "01711-555001", zone: "Dhanmondi / Uttara", active: 2, completed: 14 },
-  { name: "Ripon Das", phone: "01711-555002", zone: "Gulshan / Banani", active: 1, completed: 11 },
-  { name: "Jamal Mia", phone: "01711-555003", zone: "Mirpur / Farmgate", active: 0, completed: 9 },
+const driversList = [
+  { name: "Sumon Ali", phone: "01711-555001", zone: "Dhanmondi / Uttara" },
+  { name: "Ripon Das", phone: "01711-555002", zone: "Gulshan / Banani" },
+  { name: "Jamal Mia", phone: "01711-555003", zone: "Mirpur / Farmgate" },
 ];
-
-const statusColorMap: Record<string, string> = {
-  Scheduled: "bg-warning-50 border-warning-200",
-  "En Route": "bg-brand-50 border-brand-200",
-  "Picked Up": "bg-success-50 border-success-200",
-  Cancelled: "bg-danger-50 border-danger-200",
-};
 
 export default function PickupsPage() {
+  const { addToast } = useToast();
+  const [pickups, setPickups] = useState<Pickup[]>(initialPickups);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [driverFilter, setDriverFilter] = useState("");
+  const [showSchedule, setShowSchedule] = useState(false);
+
+  // Schedule pickup form state
+  const [form, setForm] = useState({
+    customer: "",
+    phone: "",
+    address: "",
+    items: "",
+    scheduledTime: "",
+    driver: "",
+    notes: "",
+  });
+
+  let idCounter = pickups.length + 400;
+
+  const filteredPickups = useFilteredData(
+    pickups,
+    search,
+    ["customer", "address", "id", "phone"],
+    [
+      { field: "status", value: statusFilter },
+      { field: "driver", value: driverFilter === "Unassigned" ? "" : driverFilter },
+    ].filter(f => {
+      if (driverFilter === "Unassigned") return true;
+      return true;
+    }),
+  );
+
+  // Custom filter for unassigned driver since null doesn't match string filter
+  const displayPickups = driverFilter === "Unassigned"
+    ? filteredPickups.filter(p => !p.driver)
+    : driverFilter
+      ? filteredPickups.filter(p => p.driver === driverFilter)
+      : filteredPickups;
+
+  function handleStatusChange(id: string, newStatus: string) {
+    setPickups(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p));
+    addToast(`Pickup ${id} marked as ${newStatus}`, "success");
+  }
+
+  function handleAssign(id: string) {
+    // For simplicity, assign to next available driver
+    const pickup = pickups.find(p => p.id === id);
+    if (!pickup) return;
+    const assigned = driversList[0].name; // Auto-assign to first driver
+    setPickups(prev => prev.map(p => p.id === id ? { ...p, driver: assigned, status: "En Route" } : p));
+    addToast(`Pickup ${id} assigned to ${assigned} and marked En Route`, "success");
+  }
+
+  function handleSchedulePickup(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.customer.trim() || !form.address.trim()) {
+      addToast("Please fill in required fields", "error");
+      return;
+    }
+    idCounter++;
+    const newId = `PU-0${idCounter}`;
+    const newPickup: Pickup = {
+      id: newId,
+      customer: form.customer,
+      phone: form.phone || "—",
+      address: form.address,
+      items: Number(form.items) || 1,
+      scheduledTime: form.scheduledTime || "TBD",
+      driver: form.driver || null,
+      status: form.driver ? "En Route" : "Scheduled",
+      notes: form.notes,
+    };
+    setPickups(prev => [newPickup, ...prev]);
+    addToast(`Pickup ${newId} scheduled successfully`, "success");
+    setShowSchedule(false);
+    setForm({ customer: "", phone: "", address: "", items: "", scheduledTime: "", driver: "", notes: "" });
+  }
+
+  // Compute driver stats from current pickups
+  const driverStats = driversList.map(d => ({
+    ...d,
+    active: pickups.filter(p => p.driver === d.name && (p.status === "Scheduled" || p.status === "En Route")).length,
+    completed: pickups.filter(p => p.driver === d.name && p.status === "Picked Up").length,
+  }));
+
   return (
     <div className="max-w-7xl mx-auto space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -114,29 +134,39 @@ export default function PickupsPage() {
           <h1 className="text-xl font-bold text-gray-900">Pickup Requests</h1>
           <p className="text-sm text-gray-500">{pickups.length} total pickups · {pickups.filter(p => p.status === "Scheduled").length} scheduled</p>
         </div>
-        <Button size="sm"><Plus className="w-4 h-4" /> Schedule Pickup</Button>
+        <Button size="sm" onClick={() => setShowSchedule(true)}>
+          <Plus className="w-4 h-4" /> Schedule Pickup
+        </Button>
       </div>
 
       {/* Filters */}
       <div className="flex gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" placeholder="Search by customer, address, or ID..." className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-laundry-500" />
-        </div>
-        <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-          <option>All Status</option>
-          <option>Scheduled</option>
-          <option>En Route</option>
-          <option>Picked Up</option>
-          <option>Cancelled</option>
-        </select>
-        <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-          <option>All Drivers</option>
-          <option>Sumon Ali</option>
-          <option>Ripon Das</option>
-          <option>Jamal Mia</option>
-          <option>Unassigned</option>
-        </select>
+        <SearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="Search by customer, address, or ID..."
+          className="flex-1 min-w-[200px]"
+        />
+        <SelectFilter
+          value={statusFilter}
+          onChange={setStatusFilter}
+          allLabel="All Status"
+          options={[
+            { value: "Scheduled", label: "Scheduled" },
+            { value: "En Route", label: "En Route" },
+            { value: "Picked Up", label: "Picked Up" },
+            { value: "Cancelled", label: "Cancelled" },
+          ]}
+        />
+        <SelectFilter
+          value={driverFilter}
+          onChange={setDriverFilter}
+          allLabel="All Drivers"
+          options={[
+            ...driversList.map(d => ({ value: d.name, label: d.name })),
+            { value: "Unassigned", label: "Unassigned" },
+          ]}
+        />
       </div>
 
       {/* Summary cards */}
@@ -171,7 +201,7 @@ export default function PickupsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {pickups.map((pickup) => (
+              {displayPickups.map((pickup) => (
                 <tr key={pickup.id} className="hover:bg-gray-50">
                   <td className="px-5 py-3 text-sm font-mono text-gray-600">{pickup.id}</td>
                   <td className="px-4 py-3">
@@ -200,14 +230,37 @@ export default function PickupsPage() {
                   <td className="px-4 py-3"><StatusBadge status={pickup.status} /></td>
                   <td className="px-4 py-3">
                     {pickup.status === "Scheduled" && (
-                      <button className="text-xs text-laundry-600 hover:underline font-medium">Assign</button>
+                      <button
+                        onClick={() => handleAssign(pickup.id)}
+                        className="text-xs text-laundry-600 hover:underline font-medium"
+                      >
+                        Assign
+                      </button>
                     )}
                     {pickup.status === "En Route" && (
-                      <button className="text-xs text-success-600 hover:underline font-medium">Mark Picked</button>
+                      <button
+                        onClick={() => handleStatusChange(pickup.id, "Picked Up")}
+                        className="text-xs text-success-600 hover:underline font-medium"
+                      >
+                        Mark Picked
+                      </button>
+                    )}
+                    {pickup.status === "Picked Up" && (
+                      <button
+                        onClick={() => handleStatusChange(pickup.id, "Completed")}
+                        className="text-xs text-gray-600 hover:underline font-medium"
+                      >
+                        Complete
+                      </button>
                     )}
                   </td>
                 </tr>
               ))}
+              {displayPickups.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="px-5 py-8 text-center text-sm text-gray-400">No pickups found matching your filters.</td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -219,7 +272,7 @@ export default function PickupsPage() {
           <Truck className="w-4 h-4 text-gray-400" /> Available Drivers
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {drivers.map((d) => (
+          {driverStats.map((d) => (
             <div key={d.name} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
               <div className="w-10 h-10 bg-laundry-100 rounded-full flex items-center justify-center text-laundry-700 text-sm font-bold">{d.name.charAt(0)}</div>
               <div className="flex-1 min-w-0">
@@ -236,6 +289,42 @@ export default function PickupsPage() {
           ))}
         </div>
       </div>
+
+      {/* Schedule Pickup Modal */}
+      <Modal
+        open={showSchedule}
+        onClose={() => setShowSchedule(false)}
+        title="Schedule Pickup"
+        size="md"
+        footer={
+          <>
+            <Button variant="ghost" size="sm" onClick={() => setShowSchedule(false)}>Cancel</Button>
+            <Button size="sm" onClick={handleSchedulePickup}>Schedule</Button>
+          </>
+        }
+      >
+        <form onSubmit={handleSchedulePickup} className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Customer Name" required value={form.customer} onChange={(v) => setForm(f => ({ ...f, customer: v }))} placeholder="e.g. Karim Ahmed" />
+            <FormField label="Phone" value={form.phone} onChange={(v) => setForm(f => ({ ...f, phone: v }))} placeholder="01711-XXXXXX" type="tel" />
+          </div>
+          <FormField label="Address" required value={form.address} onChange={(v) => setForm(f => ({ ...f, address: v }))} placeholder="Full pickup address" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <FormField label="Number of Items" type="number" value={form.items} onChange={(v) => setForm(f => ({ ...f, items: v }))} placeholder="e.g. 5" />
+            <FormField label="Scheduled Time" value={form.scheduledTime} onChange={(v) => setForm(f => ({ ...f, scheduledTime: v }))} placeholder="e.g. Today 4:00 PM" />
+          </div>
+          <FormField
+            label="Assign Driver"
+            value={form.driver}
+            onChange={(v) => setForm(f => ({ ...f, driver: v }))}
+            options={[
+              { value: "", label: "Unassigned" },
+              ...driversList.map(d => ({ value: d.name, label: `${d.name} (${d.zone})` })),
+            ]}
+          />
+          <FormField label="Notes" textarea value={form.notes} onChange={(v) => setForm(f => ({ ...f, notes: v }))} placeholder="Special instructions..." rows={2} />
+        </form>
+      </Modal>
     </div>
   );
 }

@@ -1,53 +1,72 @@
-import { reservations } from "@/lib/demo-data";
-import { StatusBadge, Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Plus, Search, Mail, Phone, CreditCard, Clock, Star } from "lucide-react";
+"use client";
 
-const guests = [
-  { id: "G001", name: "Mohammed Rahim Ahmed", phone: "01711-234567", email: "rahim@email.com", nid: "1990-XXXX-XXXX", visits: 4, totalSpent: 62500, lastVisit: "Apr 24, 2026", status: "Checked-In", room: "102", vip: true },
-  { id: "G002", name: "Sara Islam", phone: "01812-345678", email: "sara@email.com", nid: "1995-XXXX-XXXX", visits: 2, totalSpent: 33000, lastVisit: "Apr 23, 2026", status: "Checked-In", room: "201", vip: false },
-  { id: "G003", name: "Karim & Family", phone: "01511-789012", email: "karim@email.com", nid: "1988-XXXX-XXXX", visits: 6, totalSpent: 128000, lastVisit: "Apr 23, 2026", status: "Checked-In", room: "202", vip: true },
-  { id: "G004", name: "Nadia Begum", phone: "01312-890123", email: "nadia@email.com", nid: "1992-XXXX-XXXX", visits: 1, totalSpent: 16500, lastVisit: "Apr 24, 2026", status: "Checked-In", room: "204", vip: false },
-  { id: "G005", name: "Tanvir Hossain", phone: "01912-567890", email: "tanvir@email.com", nid: "1990-XXXX-XXXX", visits: 3, totalSpent: 42000, lastVisit: "Apr 24, 2026", status: "Checking-Out", room: "303", vip: false },
-  { id: "G006", name: "Fatema Khatun", phone: "01611-678901", email: "fatema@email.com", nid: "1993-XXXX-XXXX", visits: 1, totalSpent: 0, lastVisit: "—", status: "Confirmed", room: "—", vip: false },
-  { id: "G007", name: "Ahmed & Wife", phone: "01411-111222", email: "ahmed@email.com", nid: "1985-XXXX-XXXX", visits: 8, totalSpent: 245000, lastVisit: "Apr 22, 2026", status: "Checked-In", room: "301", vip: true },
-  { id: "G008", name: "Rasel Khan", phone: "01711-333444", email: "rasel@email.com", nid: "1991-XXXX-XXXX", visits: 2, totalSpent: 27000, lastVisit: "Apr 23, 2026", status: "Checked-In", room: "402", vip: false },
-];
+import { useState } from "react";
+import { useDataStore } from "@/lib/state/data-store";
+import { useToast } from "@/lib/state/toast-context";
+import { useFilteredData } from "@/lib/hooks/use-filtered-data";
+import { SearchInput } from "@/components/ui/search-input";
+import { SelectFilter } from "@/components/ui/select-filter";
+import { Modal } from "@/components/ui/modal";
+import { FormField } from "@/components/ui/form-field";
+import { StatusBadge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Plus, Phone, Mail, Star } from "lucide-react";
 
 export default function GuestsPage() {
+  const { state, addItem, generateId } = useDataStore();
+  const { addToast } = useToast();
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("");
+  const [detailGuest, setDetailGuest] = useState<any>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [fName, setFName] = useState("");
+  const [fPhone, setFPhone] = useState("");
+  const [fEmail, setFEmail] = useState("");
+  const [fIdType, setFIdType] = useState("NID");
+  const [fIdNumber, setFIdNumber] = useState("");
+  const [fNationality, setFNationality] = useState("Bangladeshi");
+
+  let guests = state.guests;
+  if (filter === "vip") guests = guests.filter(g => g.vip);
+
+  const filtered = useFilteredData(guests, search, ["name", "phone", "email", "idNumber"]);
+
+  function handleAdd() {
+    if (!fName.trim() || !fPhone.trim()) { addToast("Name and phone required", "error"); return; }
+    addItem("guests", {
+      id: generateId("G"), name: fName, phone: fPhone, email: fEmail,
+      idType: fIdType, idNumber: fIdNumber, nationality: fNationality,
+      totalStays: 0, totalSpent: 0, lastVisit: "—", vip: false,
+    });
+    addToast(`Guest ${fName} added`, "success");
+    setAddOpen(false);
+    setFName(""); setFPhone(""); setFEmail(""); setFIdNumber("");
+  }
+
   return (
     <div className="max-w-7xl mx-auto space-y-5">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-gray-900">Guest Profiles</h1>
-          <p className="text-sm text-gray-500">{guests.length} guests in system · {guests.filter(g => g.status === "Checked-In").length} currently checked in</p>
+          <p className="text-sm text-gray-500">{state.guests.length} guests · {state.guests.filter(g => g.vip).length} VIP</p>
         </div>
-        <Button size="sm"><Plus className="w-4 h-4" /> Add Guest</Button>
+        <Button size="sm" onClick={() => setAddOpen(true)}><Plus className="w-4 h-4" /> Add Guest</Button>
       </div>
 
       <div className="flex gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" placeholder="Search guests by name, phone, or NID..." className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
-        </div>
-        <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-          <option>All Guests</option><option>Currently In-House</option><option>VIP Only</option><option>Repeat Guests</option>
-        </select>
+        <SearchInput value={search} onChange={setSearch} placeholder="Search by name, phone, email..." className="flex-1 min-w-[200px]" />
+        <SelectFilter value={filter} onChange={setFilter} options={[{ value: "vip", label: "VIP Only" }]} allLabel="All Guests" />
       </div>
 
-      {/* Guest Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {guests.map((guest) => (
-          <div key={guest.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 hover:shadow-md transition-all cursor-pointer group">
+        {filtered.map((guest) => (
+          <div key={guest.id} onClick={() => setDetailGuest(guest)} className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 hover:shadow-md transition-all cursor-pointer group">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-brand-100 flex items-center justify-center text-brand-700 text-lg font-bold shrink-0">
-                {guest.name.charAt(0)}
-              </div>
+              <div className="w-12 h-12 rounded-xl bg-brand-100 flex items-center justify-center text-brand-700 text-lg font-bold shrink-0">{guest.name.charAt(0)}</div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-sm font-bold text-gray-900 group-hover:text-brand-600">{guest.name}</h3>
                   {guest.vip && <span className="text-[9px] font-bold bg-warning-100 text-warning-700 px-1.5 py-0.5 rounded-full flex items-center gap-0.5"><Star className="w-2.5 h-2.5 fill-warning-500" />VIP</span>}
-                  <StatusBadge status={guest.status} />
                 </div>
                 <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
                   <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{guest.phone}</span>
@@ -55,36 +74,59 @@ export default function GuestsPage() {
                 </div>
               </div>
             </div>
-
-            <div className="grid grid-cols-4 gap-3 mt-4 pt-3 border-t border-gray-100">
-              <div className="text-center">
-                <p className="text-xs text-gray-400">Room</p>
-                <p className="text-sm font-bold text-gray-900">{guest.room}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-xs text-gray-400">Visits</p>
-                <p className="text-sm font-bold text-gray-900">{guest.visits}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-xs text-gray-400">Total Spent</p>
-                <p className="text-sm font-bold text-gray-900">৳{(guest.totalSpent / 1000).toFixed(0)}K</p>
-              </div>
-              <div className="text-center">
-                <p className="text-xs text-gray-400">Last Visit</p>
-                <p className="text-[11px] font-medium text-gray-700">{guest.lastVisit}</p>
-              </div>
-            </div>
-
-            <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
-              <button className="flex-1 text-xs text-center py-1.5 bg-brand-50 text-brand-600 rounded-lg hover:bg-brand-100 font-medium">View Profile</button>
-              <button className="flex-1 text-xs text-center py-1.5 bg-gray-50 text-gray-600 rounded-lg hover:bg-gray-100 font-medium">View Ledger</button>
-              {guest.status === "Checked-In" && (
-                <button className="flex-1 text-xs text-center py-1.5 bg-success-50 text-success-600 rounded-lg hover:bg-success-100 font-medium">Add Service</button>
-              )}
+            <div className="grid grid-cols-3 gap-3 mt-4 pt-3 border-t border-gray-100">
+              <div className="text-center"><p className="text-xs text-gray-400">Stays</p><p className="text-sm font-bold text-gray-900">{guest.totalStays}</p></div>
+              <div className="text-center"><p className="text-xs text-gray-400">Total Spent</p><p className="text-sm font-bold text-gray-900">৳{(guest.totalSpent / 1000).toFixed(0)}K</p></div>
+              <div className="text-center"><p className="text-xs text-gray-400">Last Visit</p><p className="text-[11px] font-medium text-gray-700">{guest.lastVisit}</p></div>
             </div>
           </div>
         ))}
+        {filtered.length === 0 && <div className="col-span-2 py-12 text-center text-sm text-gray-400">No guests match your search</div>}
       </div>
+
+      {/* Detail Modal */}
+      <Modal open={!!detailGuest} onClose={() => setDetailGuest(null)} title={`Guest: ${detailGuest?.name}`} size="md" footer={<Button variant="ghost" size="sm" onClick={() => setDetailGuest(null)}>Close</Button>}>
+        {detailGuest && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-xl bg-brand-100 flex items-center justify-center text-brand-700 text-2xl font-bold">{detailGuest.name.charAt(0)}</div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-900">{detailGuest.name}</h3>
+                <p className="text-sm text-gray-500">{detailGuest.nationality} · {detailGuest.idType}: {detailGuest.idNumber}</p>
+                {detailGuest.vip && <span className="text-xs font-bold bg-warning-100 text-warning-700 px-2 py-0.5 rounded-full">VIP Guest</span>}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100">
+              <div><p className="text-xs text-gray-400">Phone</p><p className="text-sm text-gray-900">{detailGuest.phone}</p></div>
+              <div><p className="text-xs text-gray-400">Email</p><p className="text-sm text-gray-900">{detailGuest.email}</p></div>
+              <div><p className="text-xs text-gray-400">Total Stays</p><p className="text-sm font-bold text-gray-900">{detailGuest.totalStays}</p></div>
+              <div><p className="text-xs text-gray-400">Total Spent</p><p className="text-sm font-bold text-gray-900">৳{detailGuest.totalSpent.toLocaleString()}</p></div>
+              <div><p className="text-xs text-gray-400">Last Visit</p><p className="text-sm text-gray-900">{detailGuest.lastVisit}</p></div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Add Guest Modal */}
+      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Add New Guest" size="md" footer={
+        <>
+          <Button variant="ghost" size="sm" onClick={() => setAddOpen(false)}>Cancel</Button>
+          <Button size="sm" onClick={handleAdd}>Add Guest</Button>
+        </>
+      }>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField label="Full Name" required value={fName} onChange={setFName} placeholder="Guest name" />
+          <FormField label="Phone" required type="tel" value={fPhone} onChange={setFPhone} placeholder="+880..." />
+          <FormField label="Email" type="email" value={fEmail} onChange={setFEmail} placeholder="guest@email.com" />
+          <FormField label="Nationality" value={fNationality} onChange={setFNationality} />
+          <FormField label="ID Type" value={fIdType} onChange={setFIdType} options={[
+            { value: "NID", label: "NID" },
+            { value: "Passport", label: "Passport" },
+            { value: "Driving License", label: "Driving License" },
+          ]} />
+          <FormField label="ID Number" value={fIdNumber} onChange={setFIdNumber} placeholder="ID number" />
+        </div>
+      </Modal>
     </div>
   );
 }

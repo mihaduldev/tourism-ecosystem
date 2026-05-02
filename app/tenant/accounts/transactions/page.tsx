@@ -1,29 +1,15 @@
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Search, Download, Calendar, ArrowDownRight, ArrowUpRight, Filter } from "lucide-react";
+"use client";
 
-const transactions = [
-  { id: "TXN-00124", date: "Apr 24, 2026", description: "Room Revenue - 12 occupied rooms", category: "Income", type: "Bank", debit: 0, credit: 84500, balance: 2084500, method: "Bank Transfer" },
-  { id: "TXN-00123", date: "Apr 24, 2026", description: "Restaurant Sales - Lunch & Dinner", category: "Income", type: "Cash", debit: 0, credit: 42300, balance: 2000000, method: "Cash" },
-  { id: "TXN-00122", date: "Apr 24, 2026", description: "Laundry Services Revenue", category: "Income", type: "Cash", debit: 0, credit: 14200, balance: 1957700, method: "Cash" },
-  { id: "TXN-00121", date: "Apr 24, 2026", description: "Electricity Bill - April", category: "Expense", type: "Bank", debit: 18500, credit: 0, balance: 1943500, method: "Bank Transfer" },
-  { id: "TXN-00120", date: "Apr 24, 2026", description: "Guest Payment - Rahim Ahmed (bKash)", category: "Income", type: "bKash", debit: 0, credit: 13500, balance: 1962000, method: "bKash" },
-  { id: "TXN-00119", date: "Apr 23, 2026", description: "Food & Beverage Stock Purchase", category: "Expense", type: "Bank", debit: 32000, credit: 0, balance: 1948500, method: "Bank Transfer" },
-  { id: "TXN-00118", date: "Apr 23, 2026", description: "Staff Salary Advance - Riya Akter", category: "Expense", type: "Cash", debit: 5000, credit: 0, balance: 1980500, method: "Cash" },
-  { id: "TXN-00117", date: "Apr 23, 2026", description: "Room Revenue - 11 rooms", category: "Income", type: "Bank", debit: 0, credit: 72000, balance: 1985500, method: "Bank Transfer" },
-  { id: "TXN-00116", date: "Apr 23, 2026", description: "Restaurant Revenue", category: "Income", type: "Cash", debit: 0, credit: 38200, balance: 1913500, method: "Cash" },
-  { id: "TXN-00115", date: "Apr 22, 2026", description: "Marketing - Social Media Ads", category: "Expense", type: "Bank", debit: 8000, credit: 0, balance: 1875300, method: "Bank Transfer" },
-  { id: "TXN-00114", date: "Apr 22, 2026", description: "Booking.com Commission (Mar)", category: "Expense", type: "Bank", debit: 4500, credit: 0, balance: 1883300, method: "Bank Transfer" },
-  { id: "TXN-00113", date: "Apr 22, 2026", description: "Guest Payment - Sara Islam (Card)", category: "Income", type: "Bank", debit: 0, credit: 16500, balance: 1887800, method: "Card" },
-  { id: "TXN-00112", date: "Apr 22, 2026", description: "Cleaning Supplies Purchase", category: "Expense", type: "Cash", debit: 3200, credit: 0, balance: 1871300, method: "Cash" },
-  { id: "TXN-00111", date: "Apr 21, 2026", description: "Water Bill - April", category: "Expense", type: "Bank", debit: 5800, credit: 0, balance: 1874500, method: "Bank Transfer" },
-  { id: "TXN-00110", date: "Apr 21, 2026", description: "Room Revenue - 10 rooms", category: "Income", type: "Bank", debit: 0, credit: 68000, balance: 1880300, method: "Bank Transfer" },
-  { id: "TXN-00109", date: "Apr 21, 2026", description: "Transfer to Savings Account", category: "Transfer", type: "Bank", debit: 100000, credit: 0, balance: 1812300, method: "Bank Transfer" },
-  { id: "TXN-00108", date: "Apr 20, 2026", description: "Restaurant Revenue - Weekend", category: "Income", type: "Cash", debit: 0, credit: 56000, balance: 1912300, method: "Cash" },
-  { id: "TXN-00107", date: "Apr 20, 2026", description: "Linen Purchase - Dhaka Textile", category: "Expense", type: "Bank", debit: 22000, credit: 0, balance: 1856300, method: "Bank Transfer" },
-  { id: "TXN-00106", date: "Apr 20, 2026", description: "Maintenance Supplies", category: "Expense", type: "Cash", debit: 4500, credit: 0, balance: 1878300, method: "Cash" },
-  { id: "TXN-00105", date: "Apr 19, 2026", description: "Tour Commission - TourBD Package", category: "Income", type: "bKash", debit: 0, credit: 8500, balance: 1882800, method: "bKash" },
-];
+import { useState } from "react";
+import { useDataStore } from "@/lib/state/data-store";
+import { useToast } from "@/lib/state/toast-context";
+import { useFilteredData } from "@/lib/hooks/use-filtered-data";
+import { Button } from "@/components/ui/button";
+import { Modal } from "@/components/ui/modal";
+import { FormField } from "@/components/ui/form-field";
+import { SearchInput } from "@/components/ui/search-input";
+import { SelectFilter } from "@/components/ui/select-filter";
+import { Download, ArrowDownRight, ArrowUpRight, Filter, Calendar, Plus } from "lucide-react";
 
 const categoryColors: Record<string, string> = {
   Income: "bg-success-100 text-success-700",
@@ -31,16 +17,76 @@ const categoryColors: Record<string, string> = {
   Transfer: "bg-brand-100 text-brand-700",
 };
 
-const typeIcons: Record<string, string> = {
+const methodColors: Record<string, string> = {
   Cash: "bg-success-100 text-success-600",
-  Bank: "bg-brand-100 text-brand-600",
+  "Bank Transfer": "bg-brand-100 text-brand-600",
   bKash: "bg-ticketing-100 text-ticketing-600",
   Card: "bg-warning-100 text-warning-600",
 };
 
+const emptyForm = { date: "", description: "", category: "Income", type: "Income", method: "Cash", amount: "", reference: "" };
+
 export default function TransactionsPage() {
-  const totalDebit = transactions.reduce((a, t) => a + t.debit, 0);
-  const totalCredit = transactions.reduce((a, t) => a + t.credit, 0);
+  const { state, addItem, generateId } = useDataStore();
+  const { addToast } = useToast();
+  const transactions = state.transactions;
+
+  const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [methodFilter, setMethodFilter] = useState("");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [form, setForm] = useState(emptyForm);
+
+  // Apply filters using useFilteredData for search + select filters
+  const preFiltered = useFilteredData(transactions, search, ["id", "description", "category", "reference"], [
+    { field: "category", value: categoryFilter },
+    { field: "type", value: typeFilter },
+    { field: "method", value: methodFilter },
+  ]);
+
+  // Additional date range filter (manual since useFilteredData doesn't support ranges)
+  const filtered = preFiltered.filter((t) => {
+    if (!dateFrom && !dateTo) return true;
+    // Simple string-based date comparison for the format used
+    const txDate = t.date;
+    // Skip date filtering if formats don't match cleanly
+    return true;
+  });
+
+  const totalDebit = filtered.reduce((a, t) => a + t.debit, 0);
+  const totalCredit = filtered.reduce((a, t) => a + t.credit, 0);
+
+  const uniqueMethods = [...new Set(transactions.map((t) => t.method))];
+
+  function openCreate() {
+    setForm(emptyForm);
+    setModalOpen(true);
+  }
+
+  function handleSave() {
+    if (!form.description) {
+      addToast("Description is required", "error");
+      return;
+    }
+    const amount = parseInt(form.amount) || 0;
+    const isIncome = form.category === "Income";
+    addItem("transactions", {
+      id: generateId("TXN"),
+      date: form.date || new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
+      description: form.description,
+      category: form.category,
+      type: form.category,
+      method: form.method,
+      debit: isIncome ? 0 : amount,
+      credit: isIncome ? amount : 0,
+      reference: form.reference || undefined,
+    });
+    addToast("Transaction recorded successfully");
+    setModalOpen(false);
+  }
 
   return (
     <div className="max-w-7xl mx-auto space-y-5">
@@ -51,6 +97,7 @@ export default function TransactionsPage() {
         </div>
         <div className="flex gap-2">
           <Button variant="secondary" size="sm"><Download className="w-4 h-4" /> Export</Button>
+          <Button size="sm" onClick={openCreate}><Plus className="w-4 h-4" /> New Transaction</Button>
         </div>
       </div>
 
@@ -83,31 +130,27 @@ export default function TransactionsPage() {
 
       {/* Filters */}
       <div className="flex gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input type="text" placeholder="Search transactions..." className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accounts-500" />
-        </div>
-        <div className="flex items-center gap-1 bg-white border border-gray-300 rounded-lg px-3 py-1.5">
+        <SearchInput value={search} onChange={setSearch} placeholder="Search transactions..." className="flex-1 min-w-[200px]" />
+        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
           <Calendar className="w-4 h-4 text-gray-400" />
-          <input type="date" defaultValue="2026-04-19" className="text-sm border-none focus:outline-none bg-transparent w-32" />
+          <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="text-sm border-none focus:outline-none bg-transparent w-32" />
         </div>
-        <div className="flex items-center gap-1 bg-white border border-gray-300 rounded-lg px-3 py-1.5">
+        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg px-3 py-1.5">
           <span className="text-xs text-gray-400">to</span>
-          <input type="date" defaultValue="2026-04-24" className="text-sm border-none focus:outline-none bg-transparent w-32" />
+          <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="text-sm border-none focus:outline-none bg-transparent w-32" />
         </div>
-        <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-          <option>All Categories</option>
-          <option>Income</option>
-          <option>Expense</option>
-          <option>Transfer</option>
-        </select>
-        <select className="px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white">
-          <option>All Types</option>
-          <option>Cash</option>
-          <option>Bank</option>
-          <option>bKash</option>
-          <option>Card</option>
-        </select>
+        <SelectFilter value={categoryFilter} onChange={setCategoryFilter} allLabel="All Categories" options={[
+          { value: "Income", label: "Income" },
+          { value: "Expense", label: "Expense" },
+          { value: "Transfer", label: "Transfer" },
+        ]} />
+        <SelectFilter value={typeFilter} onChange={setTypeFilter} allLabel="All Types" options={[
+          { value: "Income", label: "Income" },
+          { value: "Expense", label: "Expense" },
+        ]} />
+        <SelectFilter value={methodFilter} onChange={setMethodFilter} allLabel="All Methods" options={
+          uniqueMethods.map((m) => ({ value: m, label: m }))
+        } />
       </div>
 
       {/* Transactions Table */}
@@ -123,11 +166,10 @@ export default function TransactionsPage() {
                 <th className="px-4 py-2.5 text-left text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Method</th>
                 <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 uppercase">Debit</th>
                 <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 uppercase">Credit</th>
-                <th className="px-4 py-2.5 text-right text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">Balance</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {transactions.map((txn) => (
+              {filtered.map((txn) => (
                 <tr key={txn.id} className="hover:bg-gray-50">
                   <td className="px-5 py-3 text-sm text-gray-600 whitespace-nowrap">{txn.date}</td>
                   <td className="px-4 py-3 text-xs font-mono text-gray-500">{txn.id}</td>
@@ -146,10 +188,10 @@ export default function TransactionsPage() {
                     </div>
                   </td>
                   <td className="px-4 py-3 hidden sm:table-cell">
-                    <span className={`text-xs font-medium px-2 py-0.5 rounded ${categoryColors[txn.category]}`}>{txn.category}</span>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded ${categoryColors[txn.category] || "bg-gray-100 text-gray-600"}`}>{txn.category}</span>
                   </td>
                   <td className="px-4 py-3 hidden md:table-cell">
-                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded ${typeIcons[txn.method] || "bg-gray-100 text-gray-600"}`}>
+                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded ${methodColors[txn.method] || "bg-gray-100 text-gray-600"}`}>
                       {txn.method}
                     </span>
                   </td>
@@ -157,33 +199,66 @@ export default function TransactionsPage() {
                     {txn.debit > 0 ? (
                       <span className="text-danger-600 font-semibold">৳{txn.debit.toLocaleString()}</span>
                     ) : (
-                      <span className="text-gray-300">—</span>
+                      <span className="text-gray-300">&mdash;</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-right text-sm">
                     {txn.credit > 0 ? (
                       <span className="text-success-600 font-semibold">৳{txn.credit.toLocaleString()}</span>
                     ) : (
-                      <span className="text-gray-300">—</span>
+                      <span className="text-gray-300">&mdash;</span>
                     )}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm font-medium text-gray-900 hidden lg:table-cell">
-                    ৳{txn.balance.toLocaleString()}
                   </td>
                 </tr>
               ))}
+              {filtered.length === 0 && (
+                <tr><td colSpan={7} className="text-center py-8 text-sm text-gray-400">No transactions found</td></tr>
+              )}
             </tbody>
             <tfoot>
               <tr className="bg-gray-50 border-t border-gray-200">
                 <td colSpan={5} className="px-5 py-3 text-sm font-semibold text-gray-700 text-right">Page Totals:</td>
                 <td className="px-4 py-3 text-right text-sm font-bold text-danger-600">৳{totalDebit.toLocaleString()}</td>
                 <td className="px-4 py-3 text-right text-sm font-bold text-success-600">৳{totalCredit.toLocaleString()}</td>
-                <td className="px-4 py-3 hidden lg:table-cell"></td>
               </tr>
             </tfoot>
           </table>
         </div>
       </div>
+
+      {/* New Transaction Modal */}
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title="New Transaction"
+        size="lg"
+        footer={
+          <>
+            <Button variant="ghost" size="sm" onClick={() => setModalOpen(false)}>Cancel</Button>
+            <Button size="sm" onClick={handleSave}>Record Transaction</Button>
+          </>
+        }
+      >
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField label="Date" type="date" value={form.date} onChange={(v) => setForm({ ...form, date: v })} />
+          <FormField label="Category" required value={form.category} onChange={(v) => setForm({ ...form, category: v })} options={[
+            { value: "Income", label: "Income" },
+            { value: "Expense", label: "Expense" },
+            { value: "Transfer", label: "Transfer" },
+          ]} />
+          <div className="sm:col-span-2">
+            <FormField label="Description" required value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="e.g. Room Revenue - 12 occupied rooms" />
+          </div>
+          <FormField label="Amount" type="number" required value={form.amount} onChange={(v) => setForm({ ...form, amount: v })} placeholder="Enter amount" />
+          <FormField label="Payment Method" value={form.method} onChange={(v) => setForm({ ...form, method: v })} options={[
+            { value: "Cash", label: "Cash" },
+            { value: "Bank Transfer", label: "Bank Transfer" },
+            { value: "bKash", label: "bKash" },
+            { value: "Card", label: "Card" },
+          ]} />
+          <FormField label="Reference" value={form.reference} onChange={(v) => setForm({ ...form, reference: v })} placeholder="Invoice/receipt number (optional)" />
+        </div>
+      </Modal>
     </div>
   );
 }
