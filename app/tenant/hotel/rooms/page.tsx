@@ -144,6 +144,7 @@ export default function RoomsPage() {
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Floor</th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Rate</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden lg:table-cell">Amenities</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden md:table-cell">Guest</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
             </tr>
@@ -164,6 +165,16 @@ export default function RoomsPage() {
                 <td className="px-4 py-3.5 text-sm text-gray-600 hidden md:table-cell">Floor {room.floor}</td>
                 <td className="px-4 py-3.5 text-sm font-semibold text-gray-900 text-right">৳{room.rate.toLocaleString()}</td>
                 <td className="px-4 py-3.5"><StatusBadge status={room.status} /></td>
+                <td className="px-4 py-3.5 hidden lg:table-cell">
+                  <div className="flex flex-wrap gap-1">
+                    {(room.amenities ?? []).slice(0, 3).map(a => (
+                      <span key={a} className="text-[9px] px-1.5 py-0.5 bg-brand-50 text-brand-700 rounded font-medium">{a}</span>
+                    ))}
+                    {(room.amenities ?? []).length > 3 && (
+                      <span className="text-[9px] px-1.5 py-0.5 bg-gray-100 text-gray-500 rounded font-medium">+{(room.amenities ?? []).length - 3}</span>
+                    )}
+                  </div>
+                </td>
                 <td className="px-4 py-3.5 text-sm text-gray-600 hidden md:table-cell">{room.guest ?? "—"}</td>
                 <td className="px-4 py-3.5">
                   <div className="flex items-center gap-1">
@@ -184,7 +195,7 @@ export default function RoomsPage() {
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={7} className="px-5 py-12 text-center text-sm text-gray-400">No rooms match your filters</td></tr>
+              <tr><td colSpan={8} className="px-5 py-12 text-center text-sm text-gray-400">No rooms match your filters</td></tr>
             )}
           </tbody>
         </table>
@@ -240,8 +251,21 @@ export default function RoomsPage() {
               <div><p className="text-xs text-gray-400">Rate</p><p className="text-sm font-bold text-gray-900">৳{detailRoom.rate.toLocaleString()}/night</p></div>
               <div><p className="text-xs text-gray-400">Beds</p><p className="text-sm text-gray-900">{detailRoom.beds}</p></div>
               <div><p className="text-xs text-gray-400">Size</p><p className="text-sm text-gray-900">{detailRoom.size}</p></div>
+              <div><p className="text-xs text-gray-400">Max Occupancy</p><p className="text-sm text-gray-900">{detailRoom.maxOccupancy ?? "—"} guests</p></div>
               <div><p className="text-xs text-gray-400">Current Guest</p><p className="text-sm text-gray-900">{detailRoom.guest ?? "None"}</p></div>
+              {detailRoom.lastCleaned && <div><p className="text-xs text-gray-400">Last Cleaned</p><p className="text-sm text-gray-900">{detailRoom.lastCleaned}</p></div>}
             </div>
+            {/* Amenities */}
+            {(detailRoom.amenities ?? []).length > 0 && (
+              <div className="pt-3 border-t border-gray-100">
+                <p className="text-xs text-gray-400 mb-2">Amenities</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {detailRoom.amenities!.map(a => (
+                    <span key={a} className="text-[10px] px-2 py-1 bg-brand-50 text-brand-700 rounded-lg font-medium">{a}</span>
+                  ))}
+                </div>
+              </div>
+            )}
             {/* Quick status actions */}
             <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
               {STATUS_OPTIONS.filter(s => s.value !== detailRoom.status).map((s) => (

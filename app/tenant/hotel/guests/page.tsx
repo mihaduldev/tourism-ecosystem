@@ -84,8 +84,8 @@ export default function GuestsPage() {
         {filtered.length === 0 && <div className="col-span-2 py-12 text-center text-sm text-gray-400">No guests match your search</div>}
       </div>
 
-      {/* Detail Modal */}
-      <Modal open={!!detailGuest} onClose={() => setDetailGuest(null)} title={`Guest: ${detailGuest?.name}`} size="md" footer={<Button variant="ghost" size="sm" onClick={() => setDetailGuest(null)}>Close</Button>}>
+      {/* Detail Modal — with reservation history and preferences */}
+      <Modal open={!!detailGuest} onClose={() => setDetailGuest(null)} title={`Guest: ${detailGuest?.name}`} size="lg" footer={<Button variant="ghost" size="sm" onClick={() => setDetailGuest(null)}>Close</Button>}>
         {detailGuest && (
           <div className="space-y-4">
             <div className="flex items-center gap-4">
@@ -102,6 +102,56 @@ export default function GuestsPage() {
               <div><p className="text-xs text-gray-400">Total Stays</p><p className="text-sm font-bold text-gray-900">{detailGuest.totalStays}</p></div>
               <div><p className="text-xs text-gray-400">Total Spent</p><p className="text-sm font-bold text-gray-900">৳{detailGuest.totalSpent.toLocaleString()}</p></div>
               <div><p className="text-xs text-gray-400">Last Visit</p><p className="text-sm text-gray-900">{detailGuest.lastVisit}</p></div>
+              {detailGuest.address && <div><p className="text-xs text-gray-400">Address</p><p className="text-sm text-gray-900">{detailGuest.address}</p></div>}
+            </div>
+
+            {/* Preferences */}
+            {(detailGuest.preferences ?? []).length > 0 && (
+              <div className="pt-3 border-t border-gray-100">
+                <p className="text-xs text-gray-400 mb-2">Preferences</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {detailGuest.preferences!.map((p: string) => (
+                    <span key={p} className="text-[10px] px-2 py-1 bg-brand-50 text-brand-700 rounded-lg font-medium">{p}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Notes */}
+            {detailGuest.notes && (
+              <div className="pt-3 border-t border-gray-100">
+                <p className="text-xs text-gray-400 mb-1">Internal Notes</p>
+                <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">{detailGuest.notes}</p>
+              </div>
+            )}
+
+            {/* Reservation History */}
+            <div className="pt-3 border-t border-gray-100">
+              <p className="text-xs text-gray-400 mb-2">Reservation History</p>
+              {(() => {
+                const guestReservations = state.reservations.filter(r =>
+                  r.guest.toLowerCase().includes(detailGuest.name.toLowerCase().split(" ")[0])
+                );
+                if (guestReservations.length === 0) {
+                  return <p className="text-xs text-gray-400">No reservations found</p>;
+                }
+                return (
+                  <div className="space-y-2">
+                    {guestReservations.map(r => (
+                      <div key={r.id} className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-mono text-brand-600">{r.id}</p>
+                          <p className="text-xs text-gray-700">Room {r.room} · {r.checkIn} &rarr; {r.checkOut}</p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-xs font-semibold">৳{r.total.toLocaleString()}</p>
+                          <StatusBadge status={r.status} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
             </div>
           </div>
         )}

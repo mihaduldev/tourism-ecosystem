@@ -5,457 +5,299 @@ import Link from "next/link";
 import { type TenantType } from "@/components/tenant/sidebar";
 import { useAuth } from "@/lib/auth-context";
 import { useDataStore } from "@/lib/state/data-store";
-import { useToast } from "@/lib/state/toast-context";
+import { TENANT_MODULE_MAP } from "@/lib/utils";
 import { StatCard } from "@/components/ui/stat-card";
-import { WeeklyBarChart } from "@/components/ui/charts";
-import { OccupancyGauge } from "@/components/ui/charts";
-import { weeklyRevenue, todayCheckIns, salesByCategory } from "@/lib/demo-data";
-import { StatusBadge } from "@/components/ui/badge";
 import {
-  BedDouble, UserCheck, LogOut, Banknote, AlertTriangle, Users,
-  ShoppingBag, Table2, ChefHat, Truck, MapPin, Calendar,
-  ArrowRight, TrendingUp, Clock, Check, ChevronRight
+  Building2, UtensilsCrossed, Waves, Map, Plane,
+  Calculator, Users, Package, CalendarCheck, HeartHandshake,
+  Banknote, Activity, UserCheck, AlertTriangle,
+  BedDouble, ShoppingBag, Truck, ArrowRight,
 } from "lucide-react";
 
-// ─── Hotel Dashboard ──────────────────────────────────────────────────────
+// ─── Extracted role-specific dashboards ──────────────────────────────────
+import { HotelDashboard } from "@/components/tenant/dashboard/hotel-dashboard";
+import { RestaurantDashboard } from "@/components/tenant/dashboard/restaurant-dashboard";
+import { LaundryDashboard } from "@/components/tenant/dashboard/laundry-dashboard";
+import { TourDashboard } from "@/components/tenant/dashboard/tour-dashboard";
+import { AccountsWidget } from "@/components/tenant/dashboard/accounts-widget";
 
-function HotelDashboard() {
-  const { state, updateItem } = useDataStore();
-  const { addToast } = useToast();
+// ─── Module Card Config ──────────────────────────────────────────────────
 
-  const rooms = state.rooms;
-  const reservations = state.reservations;
+type ModuleCardDef = {
+  id: string;
+  label: string;
+  tagline: string;
+  color: string;
+  icon: React.FC<{ className?: string }>;
+  href: string;
+};
 
-  const statusOf = (r: typeof rooms[number]) => (r.status as string).toLowerCase();
+const MODULE_DEFS: Record<string, ModuleCardDef> = {
+  hotel:      { id: "hotel",      label: "Hotel PMS",       tagline: "Rooms, reservations & guests",         color: "#2563EB", icon: Building2,        href: "/tenant/hotel" },
+  restaurant: { id: "restaurant", label: "Restaurant POS",  tagline: "POS, tables, kitchen & menu",          color: "#EA580C", icon: UtensilsCrossed,  href: "/tenant/restaurant" },
+  laundry:    { id: "laundry",    label: "Laundry",         tagline: "Orders, pickups & service pricing",    color: "#9333EA", icon: Waves,            href: "/tenant/laundry" },
+  tour:       { id: "tour",       label: "Tour Management", tagline: "Packages, bookings & guides",          color: "#16A34A", icon: Map,              href: "/tenant/tour" },
+  ticketing:  { id: "ticketing",  label: "Air Ticketing",   tagline: "Flight requests & PNR management",     color: "#7C3AED", icon: Plane,            href: "/tenant/ticketing" },
+  accounts:   { id: "accounts",   label: "Accounts",        tagline: "Financial transactions & reports",     color: "#D97706", icon: Calculator,       href: "/tenant/accounts" },
+  hr:         { id: "hr",         label: "HR & Payroll",    tagline: "Employees, attendance & leave",        color: "#0891B2", icon: Users,            href: "/tenant/hr" },
+  inventory:  { id: "inventory",  label: "Inventory",       tagline: "Stock management & purchase orders",   color: "#DC2626", icon: Package,          href: "/tenant/inventory" },
+  crm:        { id: "crm",        label: "CRM",             tagline: "Contacts, deals & sales pipeline",     color: "#475569", icon: HeartHandshake,   href: "/tenant/crm" },
+  booking:    { id: "booking",    label: "Booking Engine",  tagline: "Multi-channel reservations & widgets", color: "#2563EB", icon: CalendarCheck,    href: "/tenant/booking" },
+};
 
-  const roomsByStatus = {
-    available: rooms.filter(r => statusOf(r) === "available").length,
-    occupied: rooms.filter(r => statusOf(r) === "occupied").length,
-    dirty: rooms.filter(r => statusOf(r) === "dirty").length,
-    maintenance: rooms.filter(r => statusOf(r) === "maintenance").length,
-  };
+// ─── Module Metric Computation ───────────────────────────────────────────
 
-  const totalRooms = rooms.length;
-  const occupancy = totalRooms > 0 ? Math.round((roomsByStatus.occupied / totalRooms) * 100) : 0;
-  const checkedIn = reservations.filter(r => (r.status as string) === "Checked-In").length;
-  const checkingOut = reservations.filter(r => (r.status as string) === "Checking-Out" || (r.status as string) === "Checked-Out").length;
-  const revenueToday = reservations.filter(r => (r.status as string) === "Checked-In").reduce((sum, r) => sum + (r.rate || 0), 0);
+type Metric = { label: string; value: string | number };
 
-  const colorMap: Record<string, string> = {
-    available: "bg-success-500", occupied: "bg-brand-500",
-    dirty: "bg-warning-500", maintenance: "bg-danger-500",
-  };
+function useModuleMetrics(moduleId: string): Metric[] {
+  const { state } = useDataStore();
 
-  function handleCleanRoom(roomId: string, roomNum: string) {
-    updateItem("rooms", roomId, { status: "Available" as any });
-    addToast(`Room ${roomNum} marked as Available`, "success");
+  switch (moduleId) {
+    case "hotel": {
+      const occupied = state.rooms.filter(r => (r.status as string).toLowerCase() === "occupied").length;
+      const total = state.rooms.length;
+      const occ = total > 0 ? Math.round((occupied / total) * 100) : 0;
+      const checkIns = state.reservations.filter(r => (r.status as string) === "Checked-In").length;
+      const rev = state.reservations.filter(r => (r.status as string) === "Checked-In").reduce((s, r) => s + (r.rate || 0), 0);
+      return [{ label: "Occupancy", value: `${occ}%` }, { label: "Check-ins", value: checkIns }, { label: "Revenue", value: `৳${rev.toLocaleString()}` }];
+    }
+    case "restaurant": {
+      const orders = state.kdsOrders.length;
+      const occTbl = state.restaurantTables.filter(t => (t.status as string).toLowerCase() === "occupied").length;
+      const totTbl = state.restaurantTables.length;
+      return [{ label: "Orders", value: orders }, { label: "Tables", value: `${occTbl}/${totTbl}` }, { label: "Revenue", value: "৳42.3K" }];
+    }
+    case "laundry": {
+      const lo = state.laundryOrders;
+      return [
+        { label: "Received", value: lo.filter(o => o.status === "Received").length },
+        { label: "Processing", value: lo.filter(o => o.status === "Processing").length },
+        { label: "Ready", value: lo.filter(o => o.status === "Ready").length },
+      ];
+    }
+    case "tour": {
+      const active = state.tourBookings.filter(b => b.status === "Confirmed" || b.status === "Pending").length;
+      const rev = state.tourBookings.reduce((s, b) => s + (b.total || 0), 0);
+      return [{ label: "Bookings", value: active }, { label: "Packages", value: state.tourPackages.length }, { label: "Revenue", value: `৳${(rev / 1000).toFixed(0)}K` }];
+    }
+    case "ticketing": {
+      const tr = state.ticketRequests;
+      const newR = tr.filter(t => (t.status as string) === "New").length;
+      const proc = tr.filter(t => (t.status as string) === "Processing").length;
+      const comm = tr.filter(t => (t.status as string) === "Issued").reduce((s, t) => s + (t.commission || 0), 0);
+      return [{ label: "New", value: newR }, { label: "Processing", value: proc }, { label: "Commission", value: `৳${comm.toLocaleString()}` }];
+    }
+    case "accounts": {
+      const txn = state.transactions;
+      const inc = txn.filter(t => (t.type as string) === "credit" || (t.type as string) === "Income").reduce((s, t) => s + (t.credit || 0), 0);
+      const exp = txn.filter(t => (t.type as string) === "debit" || (t.type as string) === "Expense").reduce((s, t) => s + (t.debit || 0), 0);
+      return [{ label: "Income", value: `৳${(inc / 1000).toFixed(0)}K` }, { label: "Expenses", value: `৳${(exp / 1000).toFixed(0)}K` }, { label: "Balance", value: "৳18.4L" }];
+    }
+    case "hr": {
+      const emp = state.employees.length;
+      const present = state.attendanceRecords.filter(a => (a.status as string) === "Present").length;
+      const pendLeave = state.leaveRequests.filter(l => (l.status as string) === "Pending").length;
+      return [{ label: "Employees", value: emp }, { label: "Present", value: present }, { label: "Leave Pending", value: pendLeave }];
+    }
+    case "inventory": {
+      const items = state.stockItems.length;
+      const low = state.stockItems.filter(i => (i.currentStock || 0) < (i.minimumStock || 0)).length;
+      const pendPO = state.purchaseOrders.filter(p => (p.status as string) === "Ordered" || (p.status as string) === "In Transit").length;
+      return [{ label: "Items", value: items }, { label: "Low Stock", value: low }, { label: "Pending POs", value: pendPO }];
+    }
+    case "crm": {
+      const contacts = state.crmContacts.length;
+      const activeDeals = state.crmDeals.filter(d => d.stage !== "Won" && d.stage !== "Lost").length;
+      const pipeline = state.crmDeals.filter(d => d.stage !== "Won" && d.stage !== "Lost").reduce((s, d) => s + (d.value || 0), 0);
+      return [{ label: "Contacts", value: contacts }, { label: "Active Deals", value: activeDeals }, { label: "Pipeline", value: `৳${(pipeline / 1000).toFixed(0)}K` }];
+    }
+    case "booking": {
+      const ch = state.bookingChannels;
+      const totalBookings = ch.reduce((s, c) => s + (c.bookings || 0), 0);
+      const direct = ch.filter(c => (c.commission || 0) === 0).reduce((s, c) => s + (c.bookings || 0), 0);
+      const pct = totalBookings > 0 ? Math.round((direct / totalBookings) * 100) : 0;
+      return [{ label: "Bookings", value: totalBookings }, { label: "Channels", value: ch.length }, { label: "Direct", value: `${pct}%` }];
+    }
+    default:
+      return [{ label: "-", value: 0 }, { label: "-", value: 0 }, { label: "-", value: 0 }];
   }
+}
+
+// ─── Module Card Component ───────────────────────────────────────────────
+
+function ModuleCard({ def }: { def: ModuleCardDef }) {
+  const metrics = useModuleMetrics(def.id);
+  const Icon = def.icon;
 
   return (
-    <div className="space-y-5">
-      {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Link href="/tenant/accounts/transactions">
-          <StatCard title="Today's Revenue" value={`৳${revenueToday.toLocaleString()}`} trend={12.4} icon={<Banknote className="w-5 h-5" />} accent="#2563eb" />
-        </Link>
-        <Link href="/tenant/hotel/reservations">
-          <StatCard title="Check-ins Today" value={checkedIn} subValue={`${checkingOut} checking out`} icon={<UserCheck className="w-5 h-5" />} />
-        </Link>
-        <Link href="/tenant/hotel/reservations">
-          <StatCard title="Check-outs Today" value={checkingOut} icon={<LogOut className="w-5 h-5" />} />
-        </Link>
-        <Link href="/tenant/hotel/rooms">
-          <StatCard title="Rooms Available" value={`${roomsByStatus.available}/${totalRooms}`} subValue={`${occupancy}% occupied`} icon={<BedDouble className="w-5 h-5" />} />
-        </Link>
+    <Link
+      href={def.href}
+      className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-lg hover:border-gray-300 transition-all group flex flex-col"
+    >
+      {/* Header */}
+      <div className="flex items-start gap-3">
+        <div
+          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
+          style={{ backgroundColor: def.color + "14" }}
+        >
+          <span style={{ color: def.color }}><Icon className="w-5 h-5" /></span>
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-semibold text-gray-900 group-hover:text-gray-700 transition-colors">{def.label}</h3>
+          <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">{def.tagline}</p>
+        </div>
+        <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-gray-500 group-hover:translate-x-0.5 shrink-0 mt-1 transition-all" />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Occupancy + Revenue */}
-        <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {/* Occupancy gauge */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Today's Occupancy</h3>
-            <div className="flex items-center gap-4">
-              <OccupancyGauge value={occupancy} />
-              <div className="space-y-2">
-                {Object.entries(roomsByStatus).map(([status, count]) => (
-                  <div key={status} className="flex items-center gap-2 text-xs">
-                    <span className={`w-2 h-2 rounded-full ${colorMap[status]}`} />
-                    <span className="text-gray-600 capitalize">{status}</span>
-                    <span className="font-semibold text-gray-900 ml-auto">{count}</span>
-                  </div>
-                ))}
-              </div>
+      {/* Metrics */}
+      <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-gray-100">
+        {metrics.map((m, i) => (
+          <div key={i} className="min-w-0">
+            <p className="text-base font-bold text-gray-900 truncate">{m.value}</p>
+            <p className="text-[10px] text-gray-500 truncate">{m.label}</p>
+          </div>
+        ))}
+      </div>
+    </Link>
+  );
+}
+
+// ─── Cross-Module Stats ──────────────────────────────────────────────────
+
+function CrossModuleStats() {
+  const { state } = useDataStore();
+
+  // Total revenue across modules
+  const hotelRev = state.reservations.filter(r => (r.status as string) === "Checked-In").reduce((s, r) => s + (r.rate || 0), 0);
+  const laundryRev = state.laundryOrders.filter(o => o.status === "Delivered").reduce((s, o) => s + (o.amount || 0), 0);
+  const totalRev = hotelRev + 42300 + laundryRev;
+
+  // Active operations
+  const checkIns = state.reservations.filter(r => (r.status as string) === "Checked-In").length;
+  const kitchenOrders = state.kdsOrders.length;
+  const laundryActive = state.laundryOrders.filter(o => o.status === "Received" || o.status === "Processing").length;
+  const tourActive = state.tourBookings.filter(b => b.status === "Confirmed" || b.status === "Pending").length;
+  const totalOps = checkIns + kitchenOrders + laundryActive + tourActive;
+
+  // Staff
+  const staffPresent = state.attendanceRecords.filter(a => (a.status as string) === "Present").length;
+  const totalStaff = state.employees.length;
+
+  // Alerts
+  const dirtyRooms = state.rooms.filter(r => (r.status as string).toLowerCase() === "dirty").length;
+  const urgentOrders = state.kdsOrders.filter(o => (o.status as string) === "urgent" || (o.priority as string) === "urgent").length;
+  const lowStock = state.stockItems.filter(i => (i.currentStock || 0) < (i.minimumStock || 0)).length;
+  const pendingLeave = state.leaveRequests.filter(l => (l.status as string) === "Pending").length;
+  const alertCount = dirtyRooms + urgentOrders + lowStock + pendingLeave;
+
+  return (
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <StatCard
+        title="Today's Revenue"
+        value={`৳${totalRev.toLocaleString()}`}
+        trend={8.5}
+        icon={<Banknote className="w-5 h-5" />}
+        accent="#2563eb"
+      />
+      <StatCard
+        title="Active Operations"
+        value={totalOps}
+        subValue={`${checkIns} guests, ${kitchenOrders} orders`}
+        icon={<Activity className="w-5 h-5" />}
+      />
+      <StatCard
+        title="Staff On Duty"
+        value={`${staffPresent}/${totalStaff}`}
+        subValue={`${totalStaff - staffPresent} absent`}
+        icon={<UserCheck className="w-5 h-5" />}
+      />
+      <StatCard
+        title="Alerts"
+        value={alertCount}
+        subValue={alertCount > 0 ? "needs attention" : "all clear"}
+        icon={<AlertTriangle className="w-5 h-5" />}
+        accent={alertCount > 0 ? "#dc2626" : undefined}
+      />
+    </div>
+  );
+}
+
+// ─── Alerts Strip ────────────────────────────────────────────────────────
+
+function AlertsStrip() {
+  const { state } = useDataStore();
+
+  const alerts: { label: string; count: number; color: string; href: string; icon: React.FC<{ className?: string }> }[] = [];
+
+  const dirtyRooms = state.rooms.filter(r => (r.status as string).toLowerCase() === "dirty").length;
+  if (dirtyRooms > 0) alerts.push({ label: "Dirty rooms need cleaning", count: dirtyRooms, color: "#D97706", href: "/tenant/hotel/housekeeping", icon: BedDouble });
+
+  const urgentOrders = state.kdsOrders.filter(o => (o.status as string) === "urgent" || (o.priority as string) === "urgent").length;
+  if (urgentOrders > 0) alerts.push({ label: "Urgent kitchen orders", count: urgentOrders, color: "#DC2626", href: "/tenant/restaurant/kds", icon: ShoppingBag });
+
+  const lowStock = state.stockItems.filter(i => (i.currentStock || 0) < (i.minimumStock || 0)).length;
+  if (lowStock > 0) alerts.push({ label: "Items below minimum stock", count: lowStock, color: "#DC2626", href: "/tenant/inventory", icon: Package });
+
+  const pendingLeave = state.leaveRequests.filter(l => (l.status as string) === "Pending").length;
+  if (pendingLeave > 0) alerts.push({ label: "Leave requests pending", count: pendingLeave, color: "#D97706", href: "/tenant/hr", icon: Users });
+
+  const laundryOverdue = state.laundryOrders.filter(o => o.priority === "Express" && o.status !== "Delivered").length;
+  if (laundryOverdue > 0) alerts.push({ label: "Express laundry orders pending", count: laundryOverdue, color: "#9333EA", href: "/tenant/laundry/orders", icon: Truck });
+
+  if (alerts.length === 0) return null;
+
+  return (
+    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+      <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Needs Attention</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+        {alerts.map((a, i) => (
+          <Link
+            key={i}
+            href={a.href}
+            className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 hover:border-gray-200 transition-all group"
+          >
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: a.color + "14" }}>
+              <span style={{ color: a.color }}><a.icon className="w-4 h-4" /></span>
             </div>
-          </div>
-
-          {/* Weekly Revenue */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Weekly Revenue</h3>
-            <WeeklyBarChart data={weeklyRevenue} color="#2563eb" />
-          </div>
-        </div>
-
-        {/* Today's Check-ins */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900">Upcoming Check-ins</h3>
-            <Link href="/tenant/hotel/reservations" className="text-xs text-brand-600 hover:underline flex items-center gap-1">
-              View all <ArrowRight className="w-3 h-3" />
-            </Link>
-          </div>
-          <div className="space-y-3">
-            {todayCheckIns.map((ci) => (
-              <div key={ci.booking} className="flex items-start gap-2.5 p-3 bg-gray-50 rounded-lg">
-                <div className="w-7 h-7 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 text-xs font-bold shrink-0">
-                  {ci.guest.charAt(0)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-gray-900 truncate">{ci.guest}</p>
-                  <p className="text-[10px] text-gray-500">{ci.type} · {ci.booking}</p>
-                </div>
-                <span className="text-[10px] font-medium text-brand-600 bg-brand-50 px-1.5 py-0.5 rounded">{ci.time}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium text-gray-900">{a.label}</p>
+            </div>
+            <span className="text-sm font-bold shrink-0" style={{ color: a.color }}>{a.count}</span>
+            <ArrowRight className="w-3.5 h-3.5 text-gray-300 group-hover:text-gray-500 shrink-0 transition-colors" />
+          </Link>
+        ))}
       </div>
+    </div>
+  );
+}
 
-      {/* Mini Housekeeping Board */}
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-gray-900">Housekeeping Board</h3>
-          <Link href="/tenant/hotel/housekeeping" className="text-xs text-brand-600 hover:underline">Full Board →</Link>
-        </div>
-        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10 gap-2">
-          {rooms.map((room) => {
-            const st = statusOf(room);
-            const color = {
-              available: "bg-success-100 border-success-300 text-success-700",
-              occupied: "bg-brand-100 border-brand-300 text-brand-700",
-              dirty: "bg-warning-100 border-warning-300 text-warning-700",
-              maintenance: "bg-danger-100 border-danger-300 text-danger-700",
-            }[st] ?? "bg-gray-100 border-gray-300 text-gray-700";
+// ─── Owner/Admin/Manager Dashboard ───────────────────────────────────────
 
-            const isDirty = st === "dirty";
+function OwnerDashboard({ modules }: { modules: string[] }) {
+  return (
+    <div className="space-y-6">
+      {/* Cross-module summary */}
+      <CrossModuleStats />
 
-            return (
-              <div
-                key={room.id}
-                onClick={isDirty ? () => handleCleanRoom(room.id, room.number || room.id) : undefined}
-                title={isDirty ? "Click to mark as Available" : st}
-                className={`border rounded-lg p-1.5 text-center cursor-pointer hover:shadow-md transition-shadow ${color} ${isDirty ? "ring-2 ring-warning-400 ring-offset-1" : ""}`}
-              >
-                <p className="text-xs font-bold">{room.number || room.id}</p>
-                <p className="text-[9px] leading-tight mt-0.5 capitalize">{st === "available" ? "✓" : st === "occupied" ? "●" : st === "dirty" ? "~" : "✗"}</p>
-              </div>
-            );
+      {/* Module Cards Grid */}
+      <div>
+        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Your Modules</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {modules.map((modId) => {
+            const def = MODULE_DEFS[modId];
+            if (!def) return null;
+            return <ModuleCard key={modId} def={def} />;
           })}
         </div>
-        <div className="flex items-center gap-4 mt-3 text-[10px] text-gray-500">
-          {[["bg-success-500", "Available"], ["bg-brand-500", "Occupied"], ["bg-warning-500", "Dirty (click to clean)"], ["bg-danger-500", "Maintenance"]].map(([c, l]) => (
-            <span key={l} className="flex items-center gap-1"><span className={`w-2 h-2 rounded-full ${c}`} />{l}</span>
-          ))}
-        </div>
       </div>
+
+      {/* Alerts */}
+      <AlertsStrip />
     </div>
   );
 }
 
-// ─── Restaurant Dashboard ─────────────────────────────────────────────────
-
-function RestaurantDashboard() {
-  const { state, deleteItem } = useDataStore();
-  const { addToast } = useToast();
-
-  const kdsOrders = state.kdsOrders;
-  const restaurantTables = state.restaurantTables;
-
-  const occupiedTables = restaurantTables.filter(t => (t.status as string).toLowerCase() === "occupied").length;
-  const totalTables = restaurantTables.length;
-  const urgentOrders = kdsOrders.filter(o => (o.status as string) === "urgent" || (o.priority as string) === "urgent").length;
-  const revenueToday = 42300; // Static for demo — no POS transactions yet
-
-  return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Link href="/tenant/accounts/transactions">
-          <StatCard title="Today's Revenue" value={`৳${revenueToday.toLocaleString()}`} trend={6.8} icon={<Banknote className="w-5 h-5" />} accent="#ea580c" />
-        </Link>
-        <Link href="/tenant/restaurant/pos">
-          <StatCard title="Orders Today" value={kdsOrders.length} subValue={`Avg ৳341`} icon={<ShoppingBag className="w-5 h-5" />} />
-        </Link>
-        <Link href="/tenant/restaurant/tables">
-          <StatCard title="Tables Occupied" value={`${occupiedTables}/${totalTables}`} icon={<Table2 className="w-5 h-5" />} />
-        </Link>
-        <Link href="/tenant/restaurant/kds">
-          <StatCard title="Kitchen Queue" value={kdsOrders.length} subValue={`${urgentOrders} urgent`} icon={<ChefHat className="w-5 h-5" />} accent="#ea580c" />
-        </Link>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900">Table Map</h3>
-            <Link href="/tenant/restaurant/tables" className="text-xs text-restaurant-600 hover:underline">Full View →</Link>
-          </div>
-          <div className="grid grid-cols-5 sm:grid-cols-8 gap-2">
-            {restaurantTables.map((t) => {
-              const ts = (t.status as string).toLowerCase();
-              const color = { available:"bg-success-100 border-success-300 text-success-700", occupied:"bg-restaurant-100 border-restaurant-300 text-restaurant-700", dirty:"bg-warning-100 border-warning-300 text-warning-700", reserved:"bg-brand-100 border-brand-300 text-brand-700" }[ts] ?? "bg-gray-100 border-gray-200";
-              return (
-                <div key={t.id} className={`border-2 rounded-xl p-2 text-center cursor-pointer hover:shadow-md transition-shadow ${color}`}>
-                  <p className="text-xs font-bold">{t.id}</p>
-                  <p className="text-[9px]">{ts === "occupied" ? "●" : ts === "available" ? "✓" : ts === "dirty" ? "~" : "R"}</p>
-                </div>
-              );
-            })}
-          </div>
-          <div className="flex gap-4 mt-3 text-[10px] text-gray-500">
-            {[["bg-success-500","Available"],["bg-restaurant-500","Occupied"],["bg-warning-500","Dirty"],["bg-brand-500","Reserved"]].map(([c,l])=>(
-              <span key={l} className="flex items-center gap-1"><span className={`w-2 h-2 rounded-full ${c}`}/>{l}</span>
-            ))}
-          </div>
-        </div>
-
-        {/* Live Kitchen Queue */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900">Kitchen Queue</h3>
-            <Link href="/tenant/restaurant/kds" className="text-xs text-restaurant-600 hover:underline">KDS →</Link>
-          </div>
-          <div className="space-y-2">
-            {kdsOrders.slice(0, 5).map((ord) => {
-              const ordStatus = (ord.status as string) || (ord.priority as string) || "normal";
-              return (
-              <div key={ord.id} className={`flex items-center gap-2.5 p-2.5 rounded-lg border ${
-                ordStatus === "urgent" ? "border-danger-200 bg-danger-50" :
-                ordStatus === "warning" ? "border-warning-200 bg-warning-50" :
-                "border-gray-200 bg-gray-50"
-              }`}>
-                <div className="text-center shrink-0">
-                  <p className="text-xs font-bold text-gray-900">{ord.table}</p>
-                  <p className="text-[9px] text-gray-500">{ord.minutes}m</p>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] text-gray-700 truncate">{ord.items.map((i: any)=>`${i.qty}x ${i.name}`).join(", ")}</p>
-                </div>
-                <button
-                  onClick={() => {
-                    deleteItem("kdsOrders", ord.id);
-                    addToast(`Order ${ord.id} marked as Ready`, "success");
-                  }}
-                  className="shrink-0 flex items-center gap-1 px-2 py-1 bg-success-500 text-white text-[10px] font-semibold rounded-md hover:bg-success-600 transition-colors"
-                >
-                  <Check className="w-3 h-3" /> Ready
-                </button>
-                {ordStatus === "urgent" && <AlertTriangle className="w-3.5 h-3.5 text-danger-500 shrink-0" />}
-              </div>
-              );
-            })}
-            {kdsOrders.length === 0 && (
-              <p className="text-xs text-gray-400 text-center py-4">No orders in queue</p>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Laundry Dashboard ────────────────────────────────────────────────────
-
-function LaundryDashboard() {
-  const { state, updateItem } = useDataStore();
-  const { addToast } = useToast();
-
-  const laundryOrders = state.laundryOrders;
-  const kanban = ["Received", "Processing", "Ready", "Delivered"];
-  const nextStage: Record<string, string> = { Received: "Processing", Processing: "Ready", Ready: "Delivered" };
-
-  const counts = {
-    Received: laundryOrders.filter(o => o.status === "Received").length,
-    Processing: laundryOrders.filter(o => o.status === "Processing").length,
-    Ready: laundryOrders.filter(o => o.status === "Ready").length,
-    Delivered: laundryOrders.filter(o => o.status === "Delivered").length,
-  };
-
-  function handleMoveOrder(orderId: string, currentStatus: string) {
-    const next = nextStage[currentStatus];
-    if (next) {
-      updateItem("laundryOrders", orderId, { status: next });
-      addToast(`Order ${orderId} moved to ${next}`, "success");
-    }
-  }
-
-  return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Link href="/tenant/accounts/transactions">
-          <StatCard title="Today's Revenue" value={`৳${laundryOrders.filter(o => o.status === "Delivered").reduce((s, o) => s + (o.amount || 0), 0).toLocaleString()}`} icon={<Banknote className="w-5 h-5" />} accent="#9333ea" />
-        </Link>
-        <Link href="/tenant/laundry/orders">
-          <StatCard title="New Orders" value={counts.Received} icon={<ShoppingBag className="w-5 h-5" />} />
-        </Link>
-        <Link href="/tenant/laundry/orders">
-          <StatCard title="Processing" value={counts.Processing} icon={<Clock className="w-5 h-5" />} />
-        </Link>
-        <Link href="/tenant/laundry/orders">
-          <StatCard title="Ready for Delivery" value={counts.Ready} icon={<Truck className="w-5 h-5" />} />
-        </Link>
-      </div>
-
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-gray-900">Order Kanban</h3>
-          <Link href="/tenant/laundry/orders" className="text-xs text-laundry-600 hover:underline">Full Board →</Link>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {kanban.map((stage) => (
-            <div key={stage} className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-xs font-semibold text-gray-700">{stage}</p>
-                <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full font-medium">{counts[stage as keyof typeof counts]}</span>
-              </div>
-              <div className="space-y-1.5">
-                {laundryOrders.filter(o => o.status === stage).map((ord) => (
-                  <div key={ord.id} className="bg-gray-50 border border-gray-200 rounded-lg p-2.5">
-                    <p className="text-[10px] font-mono text-gray-500">{ord.id}</p>
-                    <p className="text-xs font-medium text-gray-900 mt-0.5">{ord.customer}</p>
-                    <p className="text-[10px] text-gray-500">{ord.items ? `${ord.items} items` : ""}</p>
-                    {stage !== "Delivered" && (
-                      <button
-                        onClick={() => handleMoveOrder(ord.id, stage)}
-                        className="mt-1.5 flex items-center gap-1 w-full justify-center px-2 py-1 bg-brand-500 text-white text-[10px] font-semibold rounded-md hover:bg-brand-600 transition-colors"
-                      >
-                        <ChevronRight className="w-3 h-3" /> {nextStage[stage] ? `Move to ${nextStage[stage]}` : "Done"}
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Tour Dashboard ───────────────────────────────────────────────────────
-
-function TourDashboard() {
-  const { state } = useDataStore();
-  const tourPackages = state.tourPackages;
-  const tourBookings = state.tourBookings;
-
-  const activeBookings = tourBookings.filter(b => b.status === "Confirmed" || b.status === "Pending").length;
-  const pendingRequests = tourBookings.filter(b => b.status === "Pending").length;
-  const revenueMonth = tourBookings.reduce((sum, b) => sum + (b.total || 0), 0);
-
-  return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Link href="/tenant/accounts/transactions">
-          <StatCard title="Monthly Revenue" value={`৳${(revenueMonth/100000).toFixed(1)}L`} icon={<Banknote className="w-5 h-5" />} accent="#16a34a" />
-        </Link>
-        <Link href="/tenant/tour/bookings">
-          <StatCard title="Active Bookings" value={activeBookings} icon={<Users className="w-5 h-5" />} />
-        </Link>
-        <Link href="/tenant/tour/packages">
-          <StatCard title="Tour Packages" value={tourPackages.length} icon={<Calendar className="w-5 h-5" />} />
-        </Link>
-        <Link href="/tenant/tour/bookings">
-          <StatCard title="Pending Requests" value={pendingRequests} subValue="review needed" icon={<AlertTriangle className="w-5 h-5" />} accent="#16a34a" />
-        </Link>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-gray-900">Upcoming Tours</h3>
-            <Link href="/tenant/tour/packages" className="text-xs text-tour-600 hover:underline">All Packages →</Link>
-          </div>
-          <div className="space-y-3">
-            {tourPackages.map((pkg) => (
-              <div key={pkg.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
-                <div className="w-9 h-9 bg-tour-100 rounded-lg flex items-center justify-center shrink-0">
-                  <MapPin className="w-4.5 h-4.5 text-tour-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-gray-900 truncate">{pkg.name}</p>
-                  <p className="text-[10px] text-gray-500 mt-0.5">{pkg.nextDate} · {pkg.duration}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-xs font-bold text-gray-900">{pkg.booked}/{pkg.capacity}</p>
-                  <p className="text-[10px] text-gray-400">booked</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4">Recent Bookings</h3>
-          <div className="space-y-2.5">
-            {tourBookings.map((b) => (
-              <div key={b.id} className="flex items-center gap-2.5 p-2.5 rounded-lg border border-gray-100 hover:bg-gray-50">
-                <div className="w-7 h-7 bg-tour-100 rounded-full flex items-center justify-center text-tour-700 text-xs font-bold shrink-0">
-                  {b.customer.charAt(0)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-gray-900">{b.customer}</p>
-                  <p className="text-[10px] text-gray-500 truncate">{b.package} · {b.persons} pax</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="text-xs font-semibold">৳{b.total.toLocaleString()}</p>
-                  <StatusBadge status={b.status} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── Accounts Mini Widget ─────────────────────────────────────────────────
-
-function AccountsWidget() {
-  const { state } = useDataStore();
-  const transactions = state.transactions;
-
-  const totalCredit = transactions.filter(t => (t.type as string) === "credit" || (t.type as string) === "Income").reduce((s, t) => s + (t.credit || 0), 0);
-  const totalDebit = transactions.filter(t => (t.type as string) === "debit" || (t.type as string) === "Expense").reduce((s, t) => s + (t.debit || 0), 0);
-
-  return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-      <h3 className="text-sm font-semibold text-gray-900 mb-3">Finance Overview</h3>
-      <div className="grid grid-cols-2 gap-3">
-        <Link href="/tenant/accounts/transactions" className="bg-success-50 rounded-lg p-3 text-center hover:ring-2 hover:ring-success-300 transition-all">
-          <p className="text-xs text-gray-500">Cash in Hand</p>
-          <p className="text-base font-bold text-success-700">৳245K</p>
-        </Link>
-        <Link href="/tenant/accounts/transactions" className="bg-brand-50 rounded-lg p-3 text-center hover:ring-2 hover:ring-brand-300 transition-all">
-          <p className="text-xs text-gray-500">Bank Balance</p>
-          <p className="text-base font-bold text-brand-700">৳18.4L</p>
-        </Link>
-        <Link href="/tenant/accounts/transactions" className="bg-warning-50 rounded-lg p-3 text-center hover:ring-2 hover:ring-warning-300 transition-all">
-          <p className="text-xs text-gray-500">Receivables</p>
-          <p className="text-base font-bold text-warning-700">৳128K</p>
-        </Link>
-        <Link href="/tenant/accounts/transactions" className="bg-danger-50 rounded-lg p-3 text-center hover:ring-2 hover:ring-danger-300 transition-all">
-          <p className="text-xs text-gray-500">Payables</p>
-          <p className="text-base font-bold text-danger-700">৳68K</p>
-        </Link>
-      </div>
-    </div>
-  );
-}
-
-// ─── DYNAMIC DASHBOARD COMPOSITION ────────────────────────────────────────
-// Instead of hard-coding by tenant type, compose dashboard from user's modules
+// ─── Dynamic Dashboard Composition ───────────────────────────────────────
 
 function DashboardContent() {
   const { currentUser, tenantType } = useAuth();
@@ -472,22 +314,13 @@ function DashboardContent() {
   const info = titles[tenantType];
   const date = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
-  // For specific single-module roles, show only that module's dashboard
-  const isSingleModule = userModules.length === 1 ||
-    (currentUser.role === "receptionist") ||
-    (currentUser.role === "chef") ||
-    (currentUser.role === "waiter") ||
-    (currentUser.role === "housekeeping");
-
-  const hasHotel = userModules.includes("hotel");
-  const hasRestaurant = userModules.includes("restaurant");
-  const hasLaundry = userModules.includes("laundry");
-  const hasTour = userModules.includes("tour");
-  const hasAccounts = userModules.includes("accounts");
-  const hasTicketing = userModules.includes("ticketing");
+  // Get the full list of modules available for this tenant (filtered by user access)
+  const tenantModules = TENANT_MODULE_MAP[tenantType] ?? [];
+  const accessibleModules = tenantModules.filter(m => userModules.includes(m as any));
 
   return (
     <div className="max-w-7xl mx-auto space-y-5">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900">{info.name}</h1>
@@ -496,92 +329,26 @@ function DashboardContent() {
         <div className="text-right">
           <p className="text-xs text-gray-400">Logged in as</p>
           <p className="text-sm font-semibold text-gray-900">{currentUser.name}</p>
-          <p className="text-xs text-gray-500">{currentUser.modules.length} module{currentUser.modules.length !== 1 ? "s" : ""} accessible</p>
+          <p className="text-xs text-gray-500">{accessibleModules.length} module{accessibleModules.length !== 1 ? "s" : ""} accessible</p>
         </div>
       </div>
 
-      {/* Role-specific: Chef only sees kitchen */}
+      {/* Role-specific dashboards for focused roles */}
       {currentUser.role === "chef" && <RestaurantDashboard />}
-
-      {/* Role-specific: Waiter only sees POS/tables */}
       {currentUser.role === "waiter" && <RestaurantDashboard />}
-
-      {/* Role-specific: Housekeeping only sees hotel rooms */}
       {currentUser.role === "housekeeping" && <HotelDashboard />}
-
-      {/* Role-specific: Receptionist sees hotel only */}
       {currentUser.role === "receptionist" && <HotelDashboard />}
-
-      {/* Role-specific: Agent sees tour/ticketing */}
       {currentUser.role === "agent" && <TourDashboard />}
-
-      {/* Role-specific: Accountant sees finance only */}
       {currentUser.role === "accountant" && <AccountsWidget />}
 
-      {/* Multi-module roles: Owner, Admin, Manager — compose from all accessible modules */}
+      {/* Multi-module roles: Owner, Admin, Manager — compact module cards */}
       {(currentUser.role === "owner" || currentUser.role === "admin" || currentUser.role === "manager") && (
-        <>
-          {/* If multiple modules, show combined summary first */}
-          {userModules.length > 2 && (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Module Overview</h3>
-              <div className="flex flex-wrap gap-2">
-                {userModules.map((mod) => {
-                  const colors: Record<string, string> = { hotel:"bg-hotel-100 text-hotel-700 border-hotel-200", restaurant:"bg-restaurant-100 text-restaurant-700 border-restaurant-200", laundry:"bg-laundry-100 text-laundry-700 border-laundry-200", tour:"bg-tour-100 text-tour-700 border-tour-200", ticketing:"bg-ticketing-100 text-ticketing-700 border-ticketing-200", accounts:"bg-accounts-100 text-accounts-700 border-accounts-200", hr:"bg-hr-100 text-hr-700 border-hr-200", inventory:"bg-inventory-100 text-inventory-700 border-inventory-200" };
-                  return (
-                    <span key={mod} className={`text-xs font-medium px-3 py-1.5 rounded-lg border capitalize ${colors[mod] ?? "bg-gray-100 text-gray-600 border-gray-200"}`}>
-                      {mod}
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Compose dashboard sections from user's modules */}
-          {hasHotel && (
-            <div>
-              <h2 className="text-sm font-semibold text-hotel-600 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                <BedDouble className="w-4 h-4" /> Hotel PMS
-              </h2>
-              <HotelDashboard />
-            </div>
-          )}
-          {hasRestaurant && (
-            <div>
-              <h2 className="text-sm font-semibold text-restaurant-600 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                <ShoppingBag className="w-4 h-4" /> Restaurant
-              </h2>
-              <RestaurantDashboard />
-            </div>
-          )}
-          {hasLaundry && (
-            <div>
-              <h2 className="text-sm font-semibold text-laundry-600 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                <Truck className="w-4 h-4" /> Laundry
-              </h2>
-              <LaundryDashboard />
-            </div>
-          )}
-          {hasTour && (
-            <div>
-              <h2 className="text-sm font-semibold text-tour-600 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                <MapPin className="w-4 h-4" /> Tour Management
-              </h2>
-              <TourDashboard />
-            </div>
-          )}
-          {hasAccounts && currentUser.permissions.canViewFinance && <AccountsWidget />}
-        </>
+        <OwnerDashboard modules={accessibleModules} />
       )}
 
       {/* Staff role with custom modules */}
-      {currentUser.role === "staff" && (
-        <>
-          {hasLaundry && <LaundryDashboard />}
-          {hasHotel && <HotelDashboard />}
-          {hasRestaurant && <RestaurantDashboard />}
-        </>
+      {currentUser.role === "staff" && accessibleModules.length > 0 && (
+        <OwnerDashboard modules={accessibleModules} />
       )}
     </div>
   );

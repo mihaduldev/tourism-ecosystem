@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --color-brand-50: #eff6ff;
   --color-brand-100: #dbeafe;
@@ -70,7 +72,9 @@
   --color-ticketing-100: #ede9fe;
   --color-ticketing-500: #7c3aed;
   --color-ticketing-600: #6d28d9;
+  --color-ticketing-700: #5b21b6;
 
+  /* ─── Semantic surface tokens (light defaults) ─── */
   --color-surface: #ffffff;
   --color-surface-2: #f9fafb;
   --color-surface-3: #f3f4f6;
@@ -101,6 +105,7 @@
     scroll-behavior: smooth;
   }
 
+  /* ─── Light mode (default) ─── */
   body {
     min-height: 100%;
     font-family: var(--font-sans);
@@ -116,12 +121,95 @@
   ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+  /* ─── Dark mode overrides ─── */
+  html.dark body {
+    background-color: #0f172a;
+    color: #f1f5f9;
+  }
+
+  html.dark ::-webkit-scrollbar-thumb { background: #475569; }
+  html.dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+  /* Card, panel, dropdown surfaces */
+  html.dark .bg-white { background-color: #1e293b !important; }
+  html.dark .bg-gray-50 { background-color: #0f172a !important; }
+  html.dark .bg-gray-100 { background-color: #1e293b !important; }
+
+  /* Borders */
+  html.dark .border-gray-200 { border-color: #334155 !important; }
+  html.dark .border-gray-100 { border-color: #1e293b !important; }
+
+  /* Text overrides */
+  html.dark .text-gray-900 { color: #f1f5f9 !important; }
+  html.dark .text-gray-800 { color: #e2e8f0 !important; }
+  html.dark .text-gray-700 { color: #cbd5e1 !important; }
+  html.dark .text-gray-600 { color: #94a3b8 !important; }
+  html.dark .text-gray-500 { color: #64748b !important; }
+  html.dark .text-gray-400 { color: #475569 !important; }
+
+  /* Hover surfaces */
+  html.dark .hover\:bg-gray-100:hover { background-color: #334155 !important; }
+  html.dark .hover\:bg-gray-50:hover { background-color: #1e293b !important; }
+  html.dark .hover\:bg-gray-200:hover { background-color: #334155 !important; }
+
+  /* Interactive states */
+  html.dark .bg-brand-50 { background-color: #1e3a5f !important; }
+  html.dark .bg-brand-100 { background-color: #1e3a5f !important; }
+
+  /* Focus rings */
+  html.dark .focus\:ring-brand-500:focus { --tw-ring-color: #3b82f6; }
+
+  /* Input fields */
+  html.dark input, html.dark select, html.dark textarea {
+    background-color: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+  }
+  html.dark input::placeholder, html.dark textarea::placeholder {
+    color: #64748b;
+  }
+  html.dark input:focus, html.dark select:focus, html.dark textarea:focus {
+    border-color: #3b82f6;
+  }
+
+  /* Status module tints — darker in dark mode */
+  html.dark .bg-success-50 { background-color: #052e16 !important; }
+  html.dark .bg-success-100 { background-color: #052e16 !important; }
+  html.dark .bg-warning-50 { background-color: #451a03 !important; }
+  html.dark .bg-warning-100 { background-color: #451a03 !important; }
+  html.dark .bg-danger-50 { background-color: #450a0a !important; }
+  html.dark .bg-danger-100 { background-color: #450a0a !important; }
+  html.dark .bg-info-100 { background-color: #1e3a5f !important; }
+
+  /* Module tinted backgrounds */
+  html.dark .bg-hotel-50, html.dark .bg-hotel-100 { background-color: #1e3a5f !important; }
+  html.dark .bg-restaurant-50, html.dark .bg-restaurant-100 { background-color: #431407 !important; }
+  html.dark .bg-laundry-50, html.dark .bg-laundry-100 { background-color: #3b0764 !important; }
+  html.dark .bg-tour-50, html.dark .bg-tour-100 { background-color: #052e16 !important; }
+  html.dark .bg-accounts-50, html.dark .bg-accounts-100 { background-color: #451a03 !important; }
+  html.dark .bg-hr-50, html.dark .bg-hr-100 { background-color: #083344 !important; }
+  html.dark .bg-inventory-50, html.dark .bg-inventory-100 { background-color: #450a0a !important; }
+  html.dark .bg-ticketing-50, html.dark .bg-ticketing-100 { background-color: #2e1065 !important; }
+
+  /* Status borders */
+  html.dark .border-brand-100, html.dark .border-brand-200 { border-color: #1e3a5f !important; }
+  html.dark .border-success-200, html.dark .border-success-300 { border-color: #166534 !important; }
+  html.dark .border-warning-200, html.dark .border-warning-300 { border-color: #92400e !important; }
+  html.dark .border-danger-200, html.dark .border-danger-300 { border-color: #991b1b !important; }
+
+  /* Dividers and separators */
+  html.dark .divide-gray-50 > :not(:last-child) { border-color: #1e293b; }
+
   select {
     appearance: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 10px center;
     cursor: pointer;
+  }
+
+  html.dark select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   }
 
   input[type="checkbox"] {
@@ -148,6 +236,11 @@
     background-size: 200% 100%;
     animation: shimmer 1.5s ease-in-out infinite;
     border-radius: 6px;
+  }
+
+  html.dark .skeleton {
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 200% 100%;
   }
 
   .kds-urgent {

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { TenantSidebar } from "@/components/tenant/sidebar";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { DataStoreProvider, useDataStore } from "@/lib/state/data-store";
@@ -11,7 +12,126 @@ import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DESCRIPTIONS, TENANT_USERS, type TenantType } from "@/lib/auth-types";
 import Link from "next/link";
-import { Bell, Search, Plus, ChevronDown, Menu, X, GitBranch, Shield, Lock, ExternalLink, Users, Clock, CheckCircle, AlertTriangle, Info, Settings, Rocket } from "lucide-react";
+import { Bell, Search, Plus, ChevronDown, Menu, X, GitBranch, Shield, Lock, ExternalLink, Users, Clock, CheckCircle, AlertTriangle, Info, Settings, Rocket, LayoutGrid, Moon, Sun, Building2, UtensilsCrossed, Waves, Map, Plane, Calculator, Package, CalendarCheck, HeartHandshake, ChevronRight } from "lucide-react";
+import { MegaMenu } from "@/components/tenant/mega-menu";
+import { ThemeProvider, useTheme } from "@/components/providers/theme-provider";
+
+// ─── Module App Bar ───────────────────────────────────────────────────────
+
+const MODULE_ROUTE_MAP: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
+  "/tenant/hotel":      { label: "Hotel PMS",       color: "#2563EB", icon: Building2 },
+  "/tenant/restaurant": { label: "Restaurant POS",  color: "#EA580C", icon: UtensilsCrossed },
+  "/tenant/laundry":    { label: "Laundry",          color: "#9333EA", icon: Waves },
+  "/tenant/tour":       { label: "Tour Management", color: "#16A34A", icon: Map },
+  "/tenant/ticketing":  { label: "Air Ticketing",   color: "#7C3AED", icon: Plane },
+  "/tenant/accounts":   { label: "Accounts",        color: "#D97706", icon: Calculator },
+  "/tenant/hr":         { label: "HR & Payroll",    color: "#0891B2", icon: Users },
+  "/tenant/inventory":  { label: "Inventory",       color: "#DC2626", icon: Package },
+  "/tenant/crm":        { label: "CRM",             color: "#475569", icon: HeartHandshake },
+  "/tenant/booking":    { label: "Booking Engine",  color: "#0EA5E9", icon: CalendarCheck },
+};
+
+const PAGE_LABEL_MAP: Record<string, string> = {
+  "/tenant/hotel/rooms": "Rooms",
+  "/tenant/hotel/calendar": "Availability",
+  "/tenant/hotel/reservations": "Reservations",
+  "/tenant/hotel/guests": "Guests",
+  "/tenant/hotel/housekeeping": "Housekeeping",
+  "/tenant/hotel/billing": "Billing",
+  "/tenant/hotel/reports": "Reports",
+  "/tenant/hotel/rates": "Rate Plans",
+  "/tenant/restaurant/pos": "POS Terminal",
+  "/tenant/restaurant/tables": "Tables",
+  "/tenant/restaurant/kds": "Kitchen (KDS)",
+  "/tenant/restaurant/menu": "Menu",
+  "/tenant/laundry/orders": "Orders",
+  "/tenant/laundry/pickups": "Pickup Requests",
+  "/tenant/laundry/services": "Services & Pricing",
+  "/tenant/tour/packages": "Packages",
+  "/tenant/tour/bookings": "Bookings",
+  "/tenant/tour/guides": "Guides",
+  "/tenant/ticketing/requests": "Flight Requests",
+  "/tenant/ticketing/pnr": "PNR Log",
+  "/tenant/accounts/transactions": "Transactions",
+  "/tenant/accounts/reports": "Financial Reports",
+  "/tenant/hr/employees": "Employees",
+  "/tenant/hr/attendance": "Attendance",
+  "/tenant/hr/leave": "Leave",
+  "/tenant/inventory/stock": "Stock",
+  "/tenant/inventory/purchase": "Purchase Orders",
+  "/tenant/crm/contacts": "Contacts",
+  "/tenant/crm/pipeline": "Pipeline",
+  "/tenant/booking/channels": "Channels",
+  "/tenant/booking/widget": "Widget",
+  "/tenant/booking/calendar": "Calendar",
+};
+
+function ModuleAppBar() {
+  const pathname = usePathname();
+
+  let activeMeta: (typeof MODULE_ROUTE_MAP)[string] | null = null;
+  let activePrefix = "";
+  for (const [prefix, meta] of Object.entries(MODULE_ROUTE_MAP)) {
+    if (pathname === prefix || pathname.startsWith(prefix + "/")) {
+      activeMeta = meta;
+      activePrefix = prefix;
+      break;
+    }
+  }
+
+  if (!activeMeta) return null;
+
+  const currentPageLabel = PAGE_LABEL_MAP[pathname];
+  const Icon = activeMeta.icon;
+  const appKey = activePrefix.replace("/tenant/", "");
+
+  return (
+    <div
+      className="h-8 bg-white border-b border-gray-100 flex items-center px-4 gap-2 shrink-0"
+      style={{ borderLeftColor: activeMeta.color, borderLeftWidth: 3 }}
+    >
+      <span style={{ color: activeMeta.color }}>
+        <Icon className="w-3.5 h-3.5" />
+      </span>
+      <Link
+        href={activePrefix}
+        className="text-xs font-semibold hover:underline"
+        style={{ color: activeMeta.color }}
+      >
+        {activeMeta.label}
+      </Link>
+      {currentPageLabel && (
+        <>
+          <ChevronRight className="w-3 h-3 text-gray-300 shrink-0" />
+          <span className="text-xs text-gray-600">{currentPageLabel}</span>
+        </>
+      )}
+      <div className="ml-auto flex items-center gap-2">
+        <span
+          className="text-[9px] font-mono px-1.5 py-0.5 rounded border"
+          style={{ color: activeMeta.color + "90", borderColor: activeMeta.color + "30", backgroundColor: activeMeta.color + "08" }}
+        >
+          app/{appKey}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─── Module-contextual quick action labels ────────────────────────────────
+
+const MODULE_QUICK_ACTIONS: Record<string, string> = {
+  "/tenant/hotel": "+ New Booking",
+  "/tenant/restaurant": "+ Open POS",
+  "/tenant/laundry": "+ New Order",
+  "/tenant/tour": "+ New Booking",
+  "/tenant/ticketing": "+ New Request",
+  "/tenant/accounts": "+ Add Transaction",
+  "/tenant/inventory": "+ Add Stock",
+  "/tenant/hr": "+ Add Employee",
+  "/tenant/crm": "+ New Lead",
+  "/tenant/booking": "+ New Channel",
+};
 
 const TENANT_DEMOS: { id: TenantType; name: string; sub: string; color: string; logo: string; bookSlug: string }[] = [
   { id: "hotel", name: "Diamond Hotel", sub: "diamond", color: "#2563EB", logo: "DH", bookSlug: "diamond" },
@@ -24,6 +144,21 @@ const TENANT_DEMOS: { id: TenantType; name: string; sub: string; color: string; 
 const quickActions: Record<TenantType, string> = {
   hotel: "+ New Booking", restaurant: "+ New Order", laundry: "+ New Order", tour: "+ New Booking", mixed: "+ New Booking",
 };
+
+// ─── Theme Toggle ────────────────────────────────────────────────────────
+
+function ThemeToggle() {
+  const { theme, toggle } = useTheme();
+  return (
+    <button
+      onClick={toggle}
+      className="p-2 rounded-md hover:bg-gray-100 text-gray-500 transition-colors"
+      title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
+    >
+      {theme === "light" ? <Moon className="w-4.5 h-4.5" /> : <Sun className="w-4.5 h-4.5" />}
+    </button>
+  );
+}
 
 // ─── Search Modal ─────────────────────────────────────────────────────────
 
@@ -317,6 +452,7 @@ function NotificationPanel({ open, onClose }: { open: boolean; onClose: () => vo
 function TenantShell({ children }: { children: React.ReactNode }) {
   const { currentUser, tenantType, tenantUsers, switchUser, switchTenant } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -325,9 +461,18 @@ function TenantShell({ children }: { children: React.ReactNode }) {
   const [showSearch, setShowSearch] = useState(false);
   const [showQuickAction, setShowQuickAction] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showMegaMenu, setShowMegaMenu] = useState(false);
   const [setupDismissed, setSetupDismissed] = useState(false);
 
   const currentTenant = TENANT_DEMOS.find((t) => t.id === tenantType) ?? TENANT_DEMOS[0];
+
+  // Determine quick action label based on current module context
+  const contextualAction = (() => {
+    for (const [prefix, label] of Object.entries(MODULE_QUICK_ACTIONS)) {
+      if (pathname === prefix || pathname.startsWith(prefix + "/")) return label;
+    }
+    return quickActions[tenantType];
+  })();
 
   function handleSwitchTenant(id: TenantType) {
     switchTenant(id);
@@ -391,6 +536,20 @@ function TenantShell({ children }: { children: React.ReactNode }) {
             <GitBranch className="w-3 h-3" /><span>Main Branch</span>
           </div>
 
+          {/* Mega menu trigger */}
+          <button
+            onClick={() => { setShowMegaMenu(!showMegaMenu); setShowTenantPicker(false); setShowUserPicker(false); setShowNotifications(false); }}
+            className={cn(
+              "hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border",
+              showMegaMenu
+                ? "bg-brand-50 text-brand-600 border-brand-200"
+                : "text-gray-600 hover:bg-gray-100 border-gray-200"
+            )}
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span>Modules</span>
+          </button>
+
           {/* Public page & Customer portal links */}
           <div className="hidden md:flex items-center gap-1.5">
             <Link href={`/book/${currentTenant.bookSlug}`} target="_blank"
@@ -414,7 +573,7 @@ function TenantShell({ children }: { children: React.ReactNode }) {
               onClick={() => setShowQuickAction(true)}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-500 rounded-lg text-xs text-white font-medium hover:bg-brand-400"
             >
-              <Plus className="w-3.5 h-3.5" /><span className="hidden sm:block">{quickActions[tenantType]}</span>
+              <Plus className="w-3.5 h-3.5" /><span className="hidden sm:block">{contextualAction}</span>
             </button>
             <div className="relative">
               <button
@@ -425,6 +584,9 @@ function TenantShell({ children }: { children: React.ReactNode }) {
               </button>
               <NotificationPanel open={showNotifications} onClose={() => setShowNotifications(false)} />
             </div>
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
 
             {/* User Picker — shows current role and lets you switch */}
             <div className="relative">
@@ -520,12 +682,16 @@ function TenantShell({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
+        {/* Module App Bar — shows current app context + breadcrumb */}
+        <ModuleAppBar />
+
         <main className="flex-1 overflow-y-auto p-5 md:p-6">{children}</main>
       </div>
 
-      {/* Modals — rendered outside topbar flow */}
+      {/* Modals & overlays — rendered outside topbar flow */}
       <SearchModal open={showSearch} onClose={() => setShowSearch(false)} />
       <QuickActionModal open={showQuickAction} onClose={() => setShowQuickAction(false)} tenantType={tenantType} />
+      <MegaMenu open={showMegaMenu} onClose={() => setShowMegaMenu(false)} />
     </div>
   );
 }
@@ -535,14 +701,16 @@ function TenantLayoutInner({ children }: { children: React.ReactNode }) {
   const initialType = (searchParams.get("type") as TenantType) ?? "hotel";
 
   return (
-    <AuthProvider initialType={initialType}>
-      <ToastProvider>
-        <DataStoreProvider>
-          <TenantShell>{children}</TenantShell>
-          <ToastContainer />
-        </DataStoreProvider>
-      </ToastProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider initialType={initialType}>
+        <ToastProvider>
+          <DataStoreProvider>
+            <TenantShell>{children}</TenantShell>
+            <ToastContainer />
+          </DataStoreProvider>
+        </ToastProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

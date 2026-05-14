@@ -40,20 +40,29 @@ export default function HousekeepingPage() {
   }
 
   function completeTask(taskId: string) {
-    updateItem("housekeepingTasks", taskId, { status: "Done" });
+    const now = new Date().toISOString().slice(0, 16).replace("T", " ");
+    updateItem("housekeepingTasks", taskId, { status: "Done", completedAt: now });
     addToast("Task marked as done", "success");
   }
 
   function startTask(taskId: string) {
-    updateItem("housekeepingTasks", taskId, { status: "In Progress" });
+    const now = new Date().toISOString().slice(0, 16).replace("T", " ");
+    updateItem("housekeepingTasks", taskId, { status: "In Progress", startedAt: now });
     addToast("Task started", "info");
   }
 
+  // Pull assignee options from employees if available
+  const employeeNames = state.employees.length > 0
+    ? state.employees.map(e => e.name || (e as any).designation || "Staff")
+    : ["Riya Akter", "Sumon Ali", "Mina Begum"];
+
   function handleAddTask() {
     if (!tRoom.trim()) { addToast("Room number required", "error"); return; }
+    const estMin = tType === "Deep Cleaning" ? 60 : tType === "Maintenance Check" ? 45 : 30;
     addItem("housekeepingTasks", {
       id: generateId("HK"), room: tRoom, type: tType,
       status: "Pending", assignee: tAssignee, priority: tPriority,
+      estimatedMinutes: estMin,
     });
     addToast(`Task added for Room ${tRoom}`, "success");
     setAddTaskOpen(false);
@@ -132,7 +141,12 @@ export default function HousekeepingPage() {
             {activeTasks.map((t) => (
               <tr key={t.id} className="hover:bg-gray-50">
                 <td className="px-5 py-3 text-sm font-bold text-gray-900">{t.room}</td>
-                <td className="px-4 py-3 text-sm text-gray-700">{t.type}</td>
+                <td className="px-4 py-3">
+                  <p className="text-sm text-gray-700">{t.type}</p>
+                  {t.estimatedMinutes && <p className="text-[10px] text-gray-400">~{t.estimatedMinutes} min</p>}
+                  {t.startedAt && <p className="text-[10px] text-brand-500">Started: {(t.startedAt as string).slice(11)}</p>}
+                  {t.completedAt && <p className="text-[10px] text-success-600">Done: {(t.completedAt as string).slice(11)}</p>}
+                </td>
                 <td className="px-4 py-3 text-sm text-gray-600 hidden sm:table-cell">{t.assignee}</td>
                 <td className="px-4 py-3">
                   <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
