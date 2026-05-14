@@ -43,9 +43,7 @@ export default function TicketingDashboard() {
           <p className="text-sm text-gray-500">SkyTickets BD - Ticketing operations overview</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/tenant/ticketing/requests">
-            <button className="px-4 py-2 bg-ticketing-500 text-white rounded-lg text-sm font-medium hover:bg-ticketing-600">+ New Request</button>
-          </Link>
+          <Link href="/tenant/ticketing/requests" className="px-4 py-2 bg-ticketing-500 text-white rounded-lg text-sm font-medium hover:bg-ticketing-600">+ New Request</Link>
         </div>
       </div>
 

@@ -46,7 +46,7 @@ export default function CheckoutPage() {
               )}>
                 {i < step ? <Check className="w-4 h-4" /> : i + 1}
               </div>
-              <span className="text-[10px] font-medium mt-1 text-gray-500 hidden sm:block">{s}</span>
+              <span className="text-[9px] sm:text-[10px] font-medium mt-1 text-gray-500 text-center leading-tight max-w-[48px]">{s}</span>
             </div>
             {i < STEPS.length - 1 && <div className={`flex-1 h-0.5 mx-2 ${i < step ? "bg-brand-500" : "bg-gray-200"}`} />}
           </div>

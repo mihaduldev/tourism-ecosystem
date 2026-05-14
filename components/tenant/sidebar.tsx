@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useDataStore } from "@/lib/state/data-store";
 import type { DataStoreState } from "@/lib/state/types";
 import { ROLE_LABELS, ROLE_COLORS } from "@/lib/auth-types";
+import { MODULE_META } from "@/lib/module-config";
 import {
   LayoutDashboard, Building2, UtensilsCrossed, Waves, Map, Plane,
   Calculator, Users, Package, CalendarCheck, HeartHandshake,
@@ -43,32 +44,29 @@ type ModuleNav = {
 
 const MODULE_NAVS: Record<string, ModuleNav> = {
   hotel: {
-    label: "Hotel PMS", tagline: "Rooms, reservations, housekeeping & billing",
-    appType: "PMS", color: "#2563EB", overviewHref: "/tenant/hotel", icon: Building2,
+    ...MODULE_META.hotel, overviewHref: MODULE_META.hotel.route, icon: Building2,
     items: [
       { label: "Rooms", href: "/tenant/hotel/rooms", icon: BedDouble },
       { label: "Availability", href: "/tenant/hotel/calendar", icon: Calendar },
-      { label: "Reservations", href: "/tenant/hotel/reservations", icon: ClipboardList, badge: (s) => { const n = s.reservations.filter(r => r.status === "Checked-In").length; return n > 0 ? { count: n, bg: "#2563EB" } : null; } },
+      { label: "Reservations", href: "/tenant/hotel/reservations", icon: ClipboardList, badge: (s) => { const n = s.reservations.filter(r => r.status === "Checked-In").length; return n > 0 ? { count: n, bg: MODULE_META.hotel.color } : null; } },
       { label: "Guests", href: "/tenant/hotel/guests", icon: UserCheck },
-      { label: "Housekeeping", href: "/tenant/hotel/housekeeping", icon: Brush, badge: (s) => { const n = s.housekeepingTasks.filter(t => t.status === "Pending").length; return n > 0 ? { count: n, bg: "#D97706" } : null; } },
-      { label: "Billing", href: "/tenant/hotel/billing", icon: ReceiptText, badge: (s) => { const n = s.reservations.filter(r => r.paymentStatus === "Pending" || r.paymentStatus === "Partial").length; return n > 0 ? { count: n, bg: "#DC2626" } : null; } },
+      { label: "Housekeeping", href: "/tenant/hotel/housekeeping", icon: Brush, badge: (s) => { const n = s.housekeepingTasks.filter(t => t.status === "Pending").length; return n > 0 ? { count: n, bg: MODULE_META.accounts.color } : null; } },
+      { label: "Billing", href: "/tenant/hotel/billing", icon: ReceiptText, badge: (s) => { const n = s.reservations.filter(r => r.paymentStatus === "Pending" || r.paymentStatus === "Partial").length; return n > 0 ? { count: n, bg: MODULE_META.inventory.color } : null; } },
       { label: "Reports", href: "/tenant/hotel/reports", icon: BarChart2 },
       { label: "Rate Plans", href: "/tenant/hotel/rates", icon: Tag },
     ],
   },
   restaurant: {
-    label: "Restaurant POS", tagline: "POS, tables, kitchen display & menu",
-    appType: "POS", color: "#EA580C", overviewHref: "/tenant/restaurant", icon: UtensilsCrossed,
+    ...MODULE_META.restaurant, overviewHref: MODULE_META.restaurant.route, icon: UtensilsCrossed,
     items: [
       { label: "POS Terminal", href: "/tenant/restaurant/pos", icon: ShoppingCart },
       { label: "Tables", href: "/tenant/restaurant/tables", icon: Table2 },
-      { label: "Kitchen (KDS)", href: "/tenant/restaurant/kds", icon: ChefHat, badge: (s) => { const n = s.kdsOrders.filter(o => o.status !== "Ready").length; return n > 0 ? { count: n, bg: "#EA580C" } : null; } },
+      { label: "Kitchen (KDS)", href: "/tenant/restaurant/kds", icon: ChefHat, badge: (s) => { const n = s.kdsOrders.filter(o => o.status !== "Ready").length; return n > 0 ? { count: n, bg: MODULE_META.restaurant.color } : null; } },
       { label: "Menu", href: "/tenant/restaurant/menu", icon: Utensils },
     ],
   },
   laundry: {
-    label: "Laundry", tagline: "Orders, pickups & service pricing",
-    appType: "OPS", color: "#9333EA", overviewHref: "/tenant/laundry", icon: Waves,
+    ...MODULE_META.laundry, overviewHref: MODULE_META.laundry.route, icon: Waves,
     items: [
       { label: "Orders", href: "/tenant/laundry/orders", icon: ClipboardList },
       { label: "Pickup Requests", href: "/tenant/laundry/pickups", icon: Truck },
@@ -76,8 +74,7 @@ const MODULE_NAVS: Record<string, ModuleNav> = {
     ],
   },
   tour: {
-    label: "Tour Management", tagline: "Packages, bookings & guide assignments",
-    appType: "TOUR", color: "#16A34A", overviewHref: "/tenant/tour", icon: Map,
+    ...MODULE_META.tour, overviewHref: MODULE_META.tour.route, icon: Map,
     items: [
       { label: "Packages", href: "/tenant/tour/packages", icon: Globe },
       { label: "Bookings", href: "/tenant/tour/bookings", icon: BookOpen },
@@ -85,49 +82,43 @@ const MODULE_NAVS: Record<string, ModuleNav> = {
     ],
   },
   ticketing: {
-    label: "Air Ticketing", tagline: "Flight requests, PNR & commissions",
-    appType: "GDS", color: "#7C3AED", overviewHref: "/tenant/ticketing", icon: Plane,
+    ...MODULE_META.ticketing, overviewHref: MODULE_META.ticketing.route, icon: Plane,
     items: [
       { label: "Flight Requests", href: "/tenant/ticketing/requests", icon: Plane },
       { label: "PNR Log", href: "/tenant/ticketing/pnr", icon: ClipboardList },
     ],
   },
   accounts: {
-    label: "Accounts", tagline: "Transactions & financial reports",
-    appType: "FIN", color: "#D97706", overviewHref: "/tenant/accounts", icon: Calculator,
+    ...MODULE_META.accounts, overviewHref: MODULE_META.accounts.route, icon: Calculator,
     items: [
       { label: "Transactions", href: "/tenant/accounts/transactions", icon: ReceiptText },
       { label: "Financial Reports", href: "/tenant/accounts/reports", icon: BarChart2 },
     ],
   },
   hr: {
-    label: "HR & Payroll", tagline: "Staff, attendance, leave & payroll",
-    appType: "HRM", color: "#0891B2", overviewHref: "/tenant/hr", icon: Users,
+    ...MODULE_META.hr, overviewHref: MODULE_META.hr.route, icon: Users,
     items: [
       { label: "Employees", href: "/tenant/hr/employees", icon: Users },
       { label: "Attendance", href: "/tenant/hr/attendance", icon: UserCheck },
-      { label: "Leave", href: "/tenant/hr/leave", icon: Calendar, badge: (s) => { const n = s.leaveRequests.filter(l => l.status === "Pending").length; return n > 0 ? { count: n, bg: "#0891B2" } : null; } },
+      { label: "Leave", href: "/tenant/hr/leave", icon: Calendar, badge: (s) => { const n = s.leaveRequests.filter(l => l.status === "Pending").length; return n > 0 ? { count: n, bg: MODULE_META.hr.color } : null; } },
     ],
   },
   inventory: {
-    label: "Inventory", tagline: "Stock levels & purchase orders",
-    appType: "INV", color: "#DC2626", overviewHref: "/tenant/inventory", icon: Package,
+    ...MODULE_META.inventory, overviewHref: MODULE_META.inventory.route, icon: Package,
     items: [
-      { label: "Stock", href: "/tenant/inventory/stock", icon: Package, badge: (s) => { const n = s.stockItems.filter(i => i.currentStock < i.minimumStock).length; return n > 0 ? { count: n, bg: "#DC2626" } : null; } },
+      { label: "Stock", href: "/tenant/inventory/stock", icon: Package, badge: (s) => { const n = s.stockItems.filter(i => i.currentStock < i.minimumStock).length; return n > 0 ? { count: n, bg: MODULE_META.inventory.color } : null; } },
       { label: "Purchase Orders", href: "/tenant/inventory/purchase", icon: ShoppingCart },
     ],
   },
   crm: {
-    label: "CRM", tagline: "Contacts, deals & loyalty pipeline",
-    appType: "CRM", color: "#475569", overviewHref: "/tenant/crm", icon: HeartHandshake,
+    ...MODULE_META.crm, overviewHref: MODULE_META.crm.route, icon: HeartHandshake,
     items: [
       { label: "Contacts", href: "/tenant/crm/contacts", icon: Users },
       { label: "Pipeline", href: "/tenant/crm/pipeline", icon: BarChart2 },
     ],
   },
   booking: {
-    label: "Booking Engine", tagline: "OTA channels, widget & availability sync",
-    appType: "BE", color: "#0EA5E9", overviewHref: "/tenant/booking", icon: CalendarCheck,
+    ...MODULE_META.booking, overviewHref: MODULE_META.booking.route, icon: CalendarCheck,
     items: [
       { label: "Channels", href: "/tenant/booking/channels", icon: Globe },
       { label: "Widget", href: "/tenant/booking/widget", icon: Settings },

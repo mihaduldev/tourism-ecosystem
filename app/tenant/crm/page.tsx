@@ -46,9 +46,7 @@ export default function CRMDashboard() {
           <p className="text-sm text-gray-500">Customer relationships & sales pipeline</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/tenant/crm/contacts">
-            <button className="px-4 py-2 bg-gray-700 text-white rounded-lg text-sm font-medium hover:bg-gray-800">+ Add Contact</button>
-          </Link>
+          <Link href="/tenant/crm/contacts" className="px-4 py-2 bg-gray-700 text-white rounded-lg text-sm font-medium hover:bg-gray-800">+ Add Contact</Link>
         </div>
       </div>
 

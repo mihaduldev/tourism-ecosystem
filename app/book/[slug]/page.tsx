@@ -78,7 +78,7 @@ function RoomBookingSection({ t, onConfirm }: { t: TenantConfig; onConfirm: (tit
   const [guests, setGuests] = useState(2);
   const [nights, setNights] = useState(3);
   return (
-    <section id="rooms" className="scroll-mt-24">
+    <section>
       <SectionHeader title="Room Types & Rates" subtitle={`${t.rooms!.length} room types available · Best price guaranteed`} icon={Building2} color={t.color} />
       <div className="space-y-4">
         {t.rooms!.map((r) => (
@@ -155,7 +155,7 @@ function RestaurantMenuSection({ t, onConfirm }: { t: TenantConfig; onConfirm: (
   }
 
   return (
-    <section id="restaurant" className="scroll-mt-24">
+    <section>
       <SectionHeader title={t.type === "restaurant" ? "Our Menu" : "In-House Restaurant"} subtitle={t.type === "restaurant" ? "Authentic Bengali & Mughlai cuisine prepared with the freshest ingredients" : "Dine in our restaurant or order room service — delivered to your door"} icon={UtensilsCrossed} color="#ea580c" />
 
       {/* Category tabs */}
@@ -235,7 +235,7 @@ function LaundrySection({ t, onConfirm }: { t: TenantConfig; onConfirm: (title: 
   }, 0);
 
   return (
-    <section id="laundry" className="scroll-mt-24">
+    <section>
       <SectionHeader title={t.type === "laundry" ? "Our Services & Pricing" : "Laundry & Dry Cleaning"} subtitle="Professional care for your garments — eco-friendly products, expert handling" icon={Droplets} color="#9333ea" />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -336,7 +336,7 @@ function SpaWellnessSection({ t, onConfirm }: { t: TenantConfig; onConfirm: (tit
   const filtered = selectedCategory === "All" ? treatments : treatments.filter(t => t.category === selectedCategory);
 
   return (
-    <section id="spa" className="scroll-mt-24">
+    <section>
       <SectionHeader title="Spa & Wellness" subtitle="Rejuvenate your body and mind with our certified therapists" icon={Sparkles} color="#ec4899" />
       <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
         {categories.map(c => (
@@ -387,7 +387,7 @@ function SpaWellnessSection({ t, onConfirm }: { t: TenantConfig; onConfirm: (tit
 
 function SwimmingPoolSection({ t }: { t: TenantConfig }) {
   return (
-    <section id="pool" className="scroll-mt-24">
+    <section>
       <SectionHeader title="Swimming Pool" subtitle="Temperature-controlled pool with panoramic views" icon={Waves} color="#0ea5e9" />
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
         <div className="h-48 flex items-center justify-center text-7xl" style={{ background: "linear-gradient(135deg, #e0f2fe, #bae6fd)" }}>🏊</div>
@@ -430,7 +430,7 @@ function SwimmingPoolSection({ t }: { t: TenantConfig }) {
 
 function GymFitnessSection({ t }: { t: TenantConfig }) {
   return (
-    <section id="gym" className="scroll-mt-24">
+    <section>
       <SectionHeader title="Gym & Fitness Center" subtitle="State-of-the-art equipment for your fitness goals" icon={Dumbbell} color="#22c55e" />
       <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
         <div className="h-48 flex items-center justify-center text-7xl" style={{ background: "linear-gradient(135deg, #dcfce7, #bbf7d0)" }}>🏋️</div>
@@ -481,7 +481,7 @@ function GymFitnessSection({ t }: { t: TenantConfig }) {
 
 function TransportSection({ t, onConfirm }: { t: TenantConfig; onConfirm: (title: string, message: string) => void }) {
   return (
-    <section id="transport" className="scroll-mt-24">
+    <section>
       <SectionHeader title="Transport Services" subtitle="Airport transfers, city tours, and private car hire" icon={Car} color="#6366f1" />
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
@@ -512,7 +512,7 @@ function TransportSection({ t, onConfirm }: { t: TenantConfig; onConfirm: (title
 function TourPackagesSection({ t, onConfirm }: { t: TenantConfig; onConfirm: (title: string, message: string) => void }) {
   const [expanded, setExpanded] = useState<string | null>(null);
   return (
-    <section id="tours" className="scroll-mt-24">
+    <section>
       <SectionHeader title="Tour Packages" subtitle="Handcrafted itineraries — curated by local experts" icon={Map} color={t.color} />
       <div className="space-y-5">
         {t.packages!.map((pkg) => {
@@ -587,7 +587,7 @@ function VisaProcessingSection({ t, onConfirm }: { t: TenantConfig; onConfirm: (
   ];
 
   return (
-    <section id="visa" className="scroll-mt-24">
+    <section>
       <SectionHeader title="Visa Processing" subtitle="Hassle-free visa applications for 40+ countries — we handle the paperwork" icon={Globe} color={t.color} />
 
       {/* Process steps */}
@@ -638,7 +638,7 @@ function VisaProcessingSection({ t, onConfirm }: { t: TenantConfig; onConfirm: (
 
 function TourGuideSection({ t, onConfirm }: { t: TenantConfig; onConfirm: (title: string, message: string) => void }) {
   return (
-    <section id="guides" className="scroll-mt-24">
+    <section>
       <SectionHeader title="Expert Tour Guides" subtitle="Experienced local guides who bring destinations to life" icon={Users} color={t.color} />
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
@@ -681,7 +681,7 @@ function TourGuideSection({ t, onConfirm }: { t: TenantConfig; onConfirm: (title
 function AirTicketingSection({ t, onConfirm }: { t: TenantConfig; onConfirm: (title: string, message: string) => void }) {
   const [tripType, setTripType] = useState("oneway");
   return (
-    <section id="flights" className="scroll-mt-24">
+    <section>
       <SectionHeader title="Air Ticketing" subtitle="Domestic & international flights at competitive prices" icon={Plane} color={t.color} />
       <div className="bg-white border border-gray-200 rounded-2xl p-6">
         <div className="flex gap-3 mb-5">
@@ -732,7 +732,7 @@ function SpecialOffersSection({ t }: { t: TenantConfig }) {
   ];
   if (t.type !== "hotel") return null;
   return (
-    <section className="scroll-mt-24">
+    <section>
       <SectionHeader title="Special Offers" subtitle="Limited-time deals you don't want to miss" icon={Gift} color="#ef4444" />
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {offers.map(o => (
@@ -780,7 +780,7 @@ function FAQSection({ t }: { t: TenantConfig }) {
   };
   const items = faqs[t.type] ?? faqs.hotel;
   return (
-    <section id="faq" className="scroll-mt-24">
+    <section>
       <SectionHeader title="Frequently Asked Questions" icon={Info} color={t.color} />
       <div className="space-y-2 max-w-3xl">
         {items.map((faq, i) => (
@@ -793,7 +793,7 @@ function FAQSection({ t }: { t: TenantConfig }) {
 
 function ContactSection({ t, onConfirm }: { t: TenantConfig; onConfirm: (title: string, message: string) => void }) {
   return (
-    <section id="contact" className="scroll-mt-24">
+    <section>
       <SectionHeader title="Get In Touch" subtitle="We'd love to hear from you" icon={Mail} color={t.color} />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white border border-gray-200 rounded-2xl p-6">
@@ -1029,7 +1029,13 @@ export default function TenantPublicPage({ params: paramsPromise }: { params: Pr
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [showChat, setShowChat] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
-  const [activeNavSection, setActiveNavSection] = useState("");
+  const [activeTab, setActiveTab] = useState("");
+  const tabContentRef = useRef<HTMLDivElement>(null);
+
+  function handleTabClick(tab: string) {
+    setActiveTab(tab);
+    setTimeout(() => tabContentRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+  }
 
   function handleConfirm(title: string, message: string) {
     setConfirmation({ title, message });
@@ -1056,6 +1062,8 @@ export default function TenantPublicPage({ params: paramsPromise }: { params: Pr
 
   const typeIcons: Record<string, any> = { hotel: Building2, restaurant: UtensilsCrossed, laundry: Waves, tour: Map };
   const TypeIcon = typeIcons[t.type] ?? Building2;
+  const currentTab = activeTab || t.modules[0] || "faq";
+  const extraTabs = ["faq", "reviews", "contact"] as const;
 
   return (
     <div className="min-h-screen bg-white">
@@ -1075,22 +1083,24 @@ export default function TenantPublicPage({ params: paramsPromise }: { params: Pr
             <Link href="/" className="hidden sm:inline-flex text-xs px-3 py-2 rounded-xl font-bold" style={{ background: `${t.color}08`, color: t.color }}>Marketplace</Link>
           </div>
         </div>
-        {/* Module quick-nav */}
-        {t.modules.length > 1 && (
-          <div className="max-w-6xl mx-auto px-6 flex gap-1 overflow-x-auto pb-2.5 scrollbar-thin">
-            {t.modules.map((m) => {
-              const NavIcon = MODULE_NAV[m].icon;
-              return (
-                <a key={m} href={MODULE_NAV[m].anchor} className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap hover:bg-gray-100 text-gray-600 transition-colors">
-                  <NavIcon className="w-3 h-3" />{MODULE_NAV[m].label}
-                </a>
-              );
-            })}
-            <a href="#faq" className="px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap hover:bg-gray-100 text-gray-600">FAQ</a>
-            <a href="#reviews" className="px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap hover:bg-gray-100 text-gray-600">Reviews</a>
-            <a href="#contact" className="px-3 py-1.5 text-xs font-medium rounded-full whitespace-nowrap hover:bg-gray-100 text-gray-600">Contact</a>
-          </div>
-        )}
+        {/* Module tab-nav */}
+        <div className="max-w-6xl mx-auto px-6 flex overflow-x-auto border-t border-gray-100" style={{ scrollbarWidth: "none" }}>
+          {t.modules.map((m) => {
+            const NavIcon = MODULE_NAV[m].icon;
+            const active = currentTab === m;
+            return (
+              <button key={m} onClick={() => handleTabClick(m)} className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold whitespace-nowrap border-b-2 transition-all shrink-0" style={active ? { borderColor: t.color, color: t.color } : { borderColor: "transparent", color: "#6b7280" }}>
+                <NavIcon className="w-3.5 h-3.5" />{MODULE_NAV[m].label}
+              </button>
+            );
+          })}
+          {[{ id: "faq", label: "FAQ" }, { id: "reviews", label: "Reviews" }, { id: "contact", label: "Contact" }].map(tab => {
+            const active = currentTab === tab.id;
+            return (
+              <button key={tab.id} onClick={() => handleTabClick(tab.id)} className="px-4 py-2.5 text-xs font-semibold whitespace-nowrap border-b-2 transition-all shrink-0" style={active ? { borderColor: t.color, color: t.color } : { borderColor: "transparent", color: "#6b7280" }}>{tab.label}</button>
+            );
+          })}
+        </div>
       </header>
 
       {/* ─── SOCIAL PROOF BAR ───────────────────────────────────────── */}
@@ -1139,9 +1149,9 @@ export default function TenantPublicPage({ params: paramsPromise }: { params: Pr
             {t.modules.map((m) => {
               const Icon = MODULE_NAV[m].icon;
               return (
-                <a key={m} href={MODULE_NAV[m].anchor} className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-full border bg-white/50 hover:bg-white transition-colors" style={{ borderColor: `${t.color}30`, color: t.color }}>
+                <button key={m} onClick={() => handleTabClick(m)} className="flex items-center gap-1.5 text-[10px] font-bold px-3 py-1.5 rounded-full border bg-white/50 hover:bg-white transition-colors" style={{ borderColor: `${t.color}30`, color: t.color }}>
                   <Icon className="w-3 h-3" />{MODULE_NAV[m].label}
-                </a>
+                </button>
               );
             })}
           </div>
@@ -1199,7 +1209,7 @@ export default function TenantPublicPage({ params: paramsPromise }: { params: Pr
                     <div className="flex justify-between"><span className="text-gray-400">Taxes & fees (15%)</span><span className="font-semibold">৳{Math.round(t.rooms![0].price * 3 * 0.15).toLocaleString()}</span></div>
                     <div className="flex justify-between border-t border-gray-100 pt-2 mt-1"><span className="font-bold text-gray-900">Total</span><span className="font-bold text-gray-900">৳{Math.round(t.rooms![0].price * 3 * 1.15).toLocaleString()}</span></div>
                   </div>
-                  <a href="#rooms"><button className="w-full py-3 text-white text-sm font-bold rounded-xl shadow-lg" style={{ background: t.color }}>Check Availability</button></a>
+                  <button onClick={() => handleTabClick("pms")} className="w-full py-3 text-white text-sm font-bold rounded-xl shadow-lg" style={{ background: t.color }}>Check Availability</button>
                 </div>
                 <div className="flex items-center justify-center gap-3 mt-3 text-[10px] text-gray-400">
                   <span className="flex items-center gap-0.5"><ShieldCheck className="w-3 h-3" />Instant confirmation</span>
@@ -1211,73 +1221,61 @@ export default function TenantPublicPage({ params: paramsPromise }: { params: Pr
         </div>
       </div>
 
-      {/* ─── SPECIAL OFFERS ─────────────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-6 mt-14">
-        <SpecialOffersSection t={t} />
-      </div>
+      {/* ─── TAB CONTENT AREA ───────────────────────────────────────── */}
+      <div ref={tabContentRef} className="max-w-6xl mx-auto px-6 pb-16 mt-8 min-h-[400px] scroll-mt-24">
+        {/* Special offers always visible when on hotel rooms tab */}
+        {currentTab === "pms" && <div className="mb-10"><SpecialOffersSection t={t} /></div>}
 
-      {/* ─── DYNAMIC MODULE SECTIONS ────────────────────────────────── */}
-      <div className="max-w-6xl mx-auto px-6 pb-16 space-y-16 mt-14">
-        {t.modules.includes("pms") && t.rooms && <RoomBookingSection t={t} onConfirm={handleConfirm} />}
-        {t.modules.includes("restaurant") && t.menu && <RestaurantMenuSection t={t} onConfirm={handleConfirm} />}
-        {t.modules.includes("laundry") && t.laundryServices && <LaundrySection t={t} onConfirm={handleConfirm} />}
-        {t.modules.includes("spa") && <SpaWellnessSection t={t} onConfirm={handleConfirm} />}
-        {t.modules.includes("pool") && <SwimmingPoolSection t={t} />}
-        {t.modules.includes("gym") && <GymFitnessSection t={t} />}
-        {t.modules.includes("transport") && <TransportSection t={t} onConfirm={handleConfirm} />}
-        {t.modules.includes("tour") && t.packages && <TourPackagesSection t={t} onConfirm={handleConfirm} />}
-        {t.modules.includes("visa") && <VisaProcessingSection t={t} onConfirm={handleConfirm} />}
-        {t.modules.includes("guide") && <TourGuideSection t={t} onConfirm={handleConfirm} />}
-        {t.modules.includes("ticketing") && <AirTicketingSection t={t} onConfirm={handleConfirm} />}
+        {/* Module tabs */}
+        {currentTab === "pms" && t.rooms && <RoomBookingSection t={t} onConfirm={handleConfirm} />}
+        {currentTab === "restaurant" && t.menu && <RestaurantMenuSection t={t} onConfirm={handleConfirm} />}
+        {currentTab === "laundry" && t.laundryServices && <LaundrySection t={t} onConfirm={handleConfirm} />}
+        {currentTab === "spa" && <SpaWellnessSection t={t} onConfirm={handleConfirm} />}
+        {currentTab === "pool" && <SwimmingPoolSection t={t} />}
+        {currentTab === "gym" && <GymFitnessSection t={t} />}
+        {currentTab === "transport" && <TransportSection t={t} onConfirm={handleConfirm} />}
+        {currentTab === "tour" && t.packages && <TourPackagesSection t={t} onConfirm={handleConfirm} />}
+        {currentTab === "visa" && <VisaProcessingSection t={t} onConfirm={handleConfirm} />}
+        {currentTab === "guide" && <TourGuideSection t={t} onConfirm={handleConfirm} />}
+        {currentTab === "ticketing" && <AirTicketingSection t={t} onConfirm={handleConfirm} />}
 
-        {/* ─── FAQ SECTION ──────────────────────────────────────────── */}
-        <FAQSection t={t} />
+        {/* Extra tabs */}
+        {currentTab === "faq" && <FAQSection t={t} />}
 
-        {/* ─── REVIEWS SECTION ──────────────────────────────────────── */}
-        <section id="reviews" className="scroll-mt-24">
-          <SectionHeader title="Customer Reviews" subtitle={`${t.reviewCount} reviews from verified customers`} icon={Star} color="#f59e0b" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-1">
-              <div className="bg-white border border-gray-200 rounded-2xl p-5">
-                <RatingBreakdown reviews={t.reviews} color={t.color} />
+        {currentTab === "reviews" && (
+          <section>
+            <SectionHeader title="Customer Reviews" subtitle={`${t.reviewCount} reviews from verified customers`} icon={Star} color="#f59e0b" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="md:col-span-1">
+                <div className="bg-white border border-gray-200 rounded-2xl p-5">
+                  <RatingBreakdown reviews={t.reviews} color={t.color} />
+                </div>
+              </div>
+              <div className="md:col-span-2 space-y-3">
+                {t.reviews.map((r, i) => (
+                  <div key={i} className="p-5 rounded-2xl bg-white border border-gray-200 hover:shadow-md transition-all">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ background: t.color }}>{r.name.charAt(0)}</div>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-gray-900">{r.name}</p>
+                        <p className="text-[10px] text-gray-400">{r.date}</p>
+                      </div>
+                      <div className="flex">{Array.from({ length: r.rating }, (_, j) => <Star key={j} className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />)}</div>
+                    </div>
+                    <p className="text-sm text-gray-600 leading-relaxed">{r.text}</p>
+                    <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-50">
+                      <button className="text-[10px] text-gray-400 hover:text-gray-600 flex items-center gap-0.5"><ThumbsUp className="w-3 h-3" />Helpful</button>
+                      <button className="text-[10px] text-gray-400 hover:text-gray-600 flex items-center gap-0.5"><Share2 className="w-3 h-3" />Share</button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
-            <div className="md:col-span-2 space-y-3">
-              {t.reviews.map((r, i) => (
-                <div key={i} className="p-5 rounded-2xl bg-white border border-gray-200 hover:shadow-md transition-all">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ background: t.color }}>{r.name.charAt(0)}</div>
-                    <div className="flex-1">
-                      <p className="text-sm font-bold text-gray-900">{r.name}</p>
-                      <p className="text-[10px] text-gray-400">{r.date}</p>
-                    </div>
-                    <div className="flex">{Array.from({ length: r.rating }, (_, j) => <Star key={j} className="w-3.5 h-3.5 text-yellow-400 fill-yellow-400" />)}</div>
-                  </div>
-                  <p className="text-sm text-gray-600 leading-relaxed">{r.text}</p>
-                  <div className="flex items-center gap-3 mt-3 pt-3 border-t border-gray-50">
-                    <button className="text-[10px] text-gray-400 hover:text-gray-600 flex items-center gap-0.5"><ThumbsUp className="w-3 h-3" />Helpful</button>
-                    <button className="text-[10px] text-gray-400 hover:text-gray-600 flex items-center gap-0.5"><Share2 className="w-3 h-3" />Share</button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <WriteReviewSection t={t} onConfirm={handleConfirm} />
-        </section>
+            <WriteReviewSection t={t} onConfirm={handleConfirm} />
+          </section>
+        )}
 
-        {/* ─── CONTACT SECTION ──────────────────────────────────────── */}
-        <ContactSection t={t} onConfirm={handleConfirm} />
-
-        {/* ─── NEWSLETTER ───────────────────────────────────────────── */}
-        <section className="rounded-2xl p-8 text-center" style={{ background: `linear-gradient(135deg, ${t.color}08, ${t.color}15)` }}>
-          <h2 className="text-xl font-bold text-gray-900 mb-1">Stay Updated</h2>
-          <p className="text-sm text-gray-500 mb-5">Subscribe for exclusive deals, new services, and seasonal offers.</p>
-          <div className="flex gap-2 max-w-md mx-auto">
-            <input type="email" placeholder="Enter your email" className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm bg-white" />
-            <button onClick={() => handleConfirm("Subscribed!", "You've been added to our mailing list. Watch your inbox for exclusive offers!")} className="px-6 py-3 text-white text-sm font-bold rounded-xl shrink-0" style={{ background: t.color }}>Subscribe</button>
-          </div>
-          <p className="text-[10px] text-gray-400 mt-2">No spam, unsubscribe anytime.</p>
-        </section>
+        {currentTab === "contact" && <ContactSection t={t} onConfirm={handleConfirm} />}
       </div>
 
       {/* ─── FOOTER ─────────────────────────────────────────────────── */}
@@ -1294,15 +1292,15 @@ export default function TenantPublicPage({ params: paramsPromise }: { params: Pr
             <div>
               <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Quick Links</h4>
               <div className="space-y-2">
-                {t.modules.slice(0, 5).map(m => <a key={m} href={MODULE_NAV[m].anchor} className="block text-xs hover:text-white transition-colors">{MODULE_NAV[m].label}</a>)}
+                {t.modules.slice(0, 5).map(m => <button key={m} onClick={() => { setActiveTab(m); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="block text-xs hover:text-white transition-colors text-left">{MODULE_NAV[m].label}</button>)}
               </div>
             </div>
             <div>
               <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-3">Support</h4>
               <div className="space-y-2">
-                <a href="#faq" className="block text-xs hover:text-white transition-colors">FAQ</a>
-                <a href="#contact" className="block text-xs hover:text-white transition-colors">Contact Us</a>
-                <a href="#reviews" className="block text-xs hover:text-white transition-colors">Reviews</a>
+                <button onClick={() => { setActiveTab("faq"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="block text-xs hover:text-white transition-colors text-left">FAQ</button>
+                <button onClick={() => { setActiveTab("contact"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="block text-xs hover:text-white transition-colors text-left">Contact Us</button>
+                <button onClick={() => { setActiveTab("reviews"); window.scrollTo({ top: 0, behavior: "smooth" }); }} className="block text-xs hover:text-white transition-colors text-left">Reviews</button>
                 <Link href={`/book/${params.slug}/account`} className="block text-xs hover:text-white transition-colors">My Account</Link>
               </div>
             </div>

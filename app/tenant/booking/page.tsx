@@ -41,10 +41,8 @@ export default function BookingOverviewPage() {
           <p className="text-sm text-gray-500">Manage bookings across all channels</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/tenant/booking/channels">
-            <button className="flex items-center gap-1.5 px-4 py-2 bg-[#2563eb] text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors">
-              <Globe className="w-4 h-4" /> Manage Channels
-            </button>
+          <Link href="/tenant/booking/channels" className="flex items-center gap-1.5 px-4 py-2 bg-[#2563eb] text-white rounded-lg text-sm font-medium hover:bg-blue-600 transition-colors">
+            <Globe className="w-4 h-4" /> Manage Channels
           </Link>
         </div>
       </div>

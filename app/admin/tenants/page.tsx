@@ -167,7 +167,7 @@ export default function TenantsPage() {
                   </td>
                   <td className="px-4 py-3.5 text-sm text-gray-600 hidden md:table-cell">{t.users}</td>
                   <td className="px-4 py-3.5 text-right">
-                    <span className="text-sm font-semibold text-gray-900">&#2547;{t.revenue.toLocaleString()}</span>
+                    <span className="text-sm font-semibold text-gray-900">৳{t.revenue.toLocaleString()}</span>
                     <p className="text-[10px] text-gray-400">/month</p>
                   </td>
                   <td className="px-4 py-3.5">

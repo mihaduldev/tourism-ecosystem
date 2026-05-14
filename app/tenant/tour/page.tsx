@@ -30,9 +30,7 @@ export default function TourDashboard() {
           <p className="text-sm text-gray-500">TourBD Agency - Operations overview</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/tenant/tour/packages">
-            <button className="px-4 py-2 bg-tour-500 text-white rounded-lg text-sm font-medium hover:bg-tour-600">+ New Package</button>
-          </Link>
+          <Link href="/tenant/tour/packages" className="px-4 py-2 bg-tour-500 text-white rounded-lg text-sm font-medium hover:bg-tour-600">+ New Package</Link>
         </div>
       </div>
 

@@ -15,21 +15,24 @@ import Link from "next/link";
 import { Bell, Search, Plus, ChevronDown, Menu, X, GitBranch, Shield, Lock, ExternalLink, Users, Clock, CheckCircle, AlertTriangle, Info, Settings, Rocket, LayoutGrid, Moon, Sun, Building2, UtensilsCrossed, Waves, Map, Plane, Calculator, Package, CalendarCheck, HeartHandshake, ChevronRight } from "lucide-react";
 import { MegaMenu } from "@/components/tenant/mega-menu";
 import { ThemeProvider, useTheme } from "@/components/providers/theme-provider";
+import { MODULE_META, ROUTE_TO_MODULE } from "@/lib/module-config";
+
+// ─── Module icon map (icons can't be in lib/module-config — no JSX there) ─────
+
+const MODULE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  hotel: Building2, restaurant: UtensilsCrossed, laundry: Waves, tour: Map,
+  ticketing: Plane, accounts: Calculator, hr: Users, inventory: Package,
+  booking: CalendarCheck, crm: HeartHandshake,
+};
 
 // ─── Module App Bar ───────────────────────────────────────────────────────
 
-const MODULE_ROUTE_MAP: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = {
-  "/tenant/hotel":      { label: "Hotel PMS",       color: "#2563EB", icon: Building2 },
-  "/tenant/restaurant": { label: "Restaurant POS",  color: "#EA580C", icon: UtensilsCrossed },
-  "/tenant/laundry":    { label: "Laundry",          color: "#9333EA", icon: Waves },
-  "/tenant/tour":       { label: "Tour Management", color: "#16A34A", icon: Map },
-  "/tenant/ticketing":  { label: "Air Ticketing",   color: "#7C3AED", icon: Plane },
-  "/tenant/accounts":   { label: "Accounts",        color: "#D97706", icon: Calculator },
-  "/tenant/hr":         { label: "HR & Payroll",    color: "#0891B2", icon: Users },
-  "/tenant/inventory":  { label: "Inventory",       color: "#DC2626", icon: Package },
-  "/tenant/crm":        { label: "CRM",             color: "#475569", icon: HeartHandshake },
-  "/tenant/booking":    { label: "Booking Engine",  color: "#0EA5E9", icon: CalendarCheck },
-};
+const MODULE_ROUTE_MAP: Record<string, { label: string; color: string; icon: React.ComponentType<{ className?: string }> }> = Object.fromEntries(
+  Object.entries(ROUTE_TO_MODULE).map(([route, id]) => [
+    route,
+    { label: MODULE_META[id].label, color: MODULE_META[id].color, icon: MODULE_ICONS[id] ?? Package },
+  ])
+);
 
 const PAGE_LABEL_MAP: Record<string, string> = {
   "/tenant/hotel/rooms": "Rooms",
@@ -134,11 +137,11 @@ const MODULE_QUICK_ACTIONS: Record<string, string> = {
 };
 
 const TENANT_DEMOS: { id: TenantType; name: string; sub: string; color: string; logo: string; bookSlug: string }[] = [
-  { id: "hotel", name: "Diamond Hotel", sub: "diamond", color: "#2563EB", logo: "DH", bookSlug: "diamond" },
-  { id: "restaurant", name: "ABC Restaurant", sub: "abcrest", color: "#EA580C", logo: "AR", bookSlug: "abcrestaurant" },
-  { id: "laundry", name: "LaundryKing", sub: "lking", color: "#9333EA", logo: "LK", bookSlug: "laundryking" },
-  { id: "tour", name: "TourBD Agency", sub: "tourbd", color: "#16A34A", logo: "TB", bookSlug: "tourbd" },
-  { id: "mixed", name: "Grand Horizon", sub: "grandhorizon", color: "#0891B2", logo: "GH", bookSlug: "diamond" },
+  { id: "hotel",      name: "Diamond Hotel",    sub: "diamond",      color: MODULE_META.hotel.color,      logo: "DH", bookSlug: "diamond" },
+  { id: "restaurant", name: "ABC Restaurant",   sub: "abcrest",      color: MODULE_META.restaurant.color, logo: "AR", bookSlug: "abcrestaurant" },
+  { id: "laundry",    name: "LaundryKing",      sub: "lking",        color: MODULE_META.laundry.color,    logo: "LK", bookSlug: "laundryking" },
+  { id: "tour",       name: "TourBD Agency",    sub: "tourbd",       color: MODULE_META.tour.color,       logo: "TB", bookSlug: "tourbd" },
+  { id: "mixed",      name: "Grand Horizon",    sub: "grandhorizon", color: MODULE_META.hr.color,         logo: "GH", bookSlug: "diamond" },
 ];
 
 const quickActions: Record<TenantType, string> = {

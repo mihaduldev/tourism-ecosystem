@@ -114,10 +114,8 @@ export default function TenantReportsPage() {
           <h1 className="text-xl font-bold text-gray-900">Reports Center</h1>
           <p className="text-sm text-gray-500">Module-wise reports and analytics</p>
         </div>
-        <Link href="/tenant/accounts/reports">
-          <button className="flex items-center gap-1.5 px-4 py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-400">
-            <BarChart3 className="w-4 h-4" /> Financial Reports
-          </button>
+        <Link href="/tenant/accounts/reports" className="flex items-center gap-1.5 px-4 py-2 bg-brand-500 text-white rounded-lg text-sm font-medium hover:bg-brand-400">
+          <BarChart3 className="w-4 h-4" /> Financial Reports
         </Link>
       </div>
 

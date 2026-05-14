@@ -156,7 +156,7 @@ export default function CalendarPage() {
   const todayStr = dateStr(today.getFullYear(), today.getMonth(), today.getDate());
 
   return (
-    <div className="max-w-full mx-auto space-y-5">
+    <div className="max-w-7xl mx-auto space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

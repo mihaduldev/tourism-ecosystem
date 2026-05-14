@@ -454,7 +454,7 @@ export default function SettingsPage() {
               <div className="space-y-2">
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">Monthly Fee</span>
-                  <span className="font-bold text-gray-900">&#2547;15,000/mo</span>
+                  <span className="font-bold text-gray-900">৳15,000/mo</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">Billing Cycle</span>
@@ -487,7 +487,7 @@ export default function SettingsPage() {
                       <span className={`text-sm ${mod.active ? "text-gray-900" : "text-gray-400"}`}>{mod.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500">&#2547;{mod.price}/mo</span>
+                      <span className="text-xs text-gray-500">৳{mod.price}/mo</span>
                       {!mod.active && (
                         <button onClick={() => activateModule(mod.name)} className="text-[10px] text-brand-600 hover:underline font-medium">Activate</button>
                       )}
@@ -510,7 +510,7 @@ export default function SettingsPage() {
                 <div key={payment.invoice} className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-gray-500">{payment.date}</span>
-                    <span className="text-sm font-medium text-gray-900">&#2547;{payment.amount.toLocaleString()}</span>
+                    <span className="text-sm font-medium text-gray-900">৳{payment.amount.toLocaleString()}</span>
                     <span className="text-xs text-gray-400">{payment.method}</span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -643,7 +643,7 @@ export default function SettingsPage() {
             ].map((plan) => (
               <div key={plan.name} className={`p-4 rounded-xl border-2 ${plan.current ? "border-brand-500 bg-brand-50" : "border-gray-200"}`}>
                 <h4 className="text-sm font-bold text-gray-900">{plan.name}</h4>
-                <p className="text-lg font-bold text-brand-600 mt-1">&#2547;{plan.price}<span className="text-xs font-normal text-gray-400">/mo</span></p>
+                <p className="text-lg font-bold text-brand-600 mt-1">৳{plan.price}<span className="text-xs font-normal text-gray-400">/mo</span></p>
                 <div className="mt-3 space-y-1">
                   <p className="text-xs text-gray-500">{plan.users}</p>
                   <p className="text-xs text-gray-500">{plan.modules}</p>

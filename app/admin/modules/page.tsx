@@ -90,7 +90,7 @@ export default function ModulesPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-sm font-semibold text-gray-900">{mod.name}</h3>
-                    <span className="text-xs text-gray-400">&#2547;{mod.price.toLocaleString()}/mo</span>
+                    <span className="text-xs text-gray-400">৳{mod.price.toLocaleString()}/mo</span>
                     {!mod.enabled && <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">Disabled</span>}
                   </div>
                   <p className="text-xs text-gray-500 mt-1">{mod.desc}</p>
@@ -165,7 +165,7 @@ export default function ModulesPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-50 rounded-lg p-3">
                   <p className="text-[10px] text-gray-400 uppercase tracking-wide">Price</p>
-                  <p className="text-sm font-bold text-gray-900 mt-0.5">&#2547;{detailModule.price.toLocaleString()}/mo</p>
+                  <p className="text-sm font-bold text-gray-900 mt-0.5">৳{detailModule.price.toLocaleString()}/mo</p>
                 </div>
                 <div className="bg-gray-50 rounded-lg p-3">
                   <p className="text-[10px] text-gray-400 uppercase tracking-wide">Status</p>

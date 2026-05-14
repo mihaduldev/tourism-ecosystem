@@ -95,15 +95,15 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
             <p className="text-xs leading-relaxed">The operating system for tourism and service businesses. One platform, unlimited businesses.</p>
           </div>
           {[
-            { title: "Platform", links: ["Hotels", "Tours", "Flights", "Restaurants"] },
-            { title: "Business", links: ["For Hotels", "For Restaurants", "For Agencies", "Pricing"] },
-            { title: "Company", links: ["About", "Contact", "Careers", "Blog"] },
+            { title: "Platform", links: [{ label: "Hotels", href: "/hotels" }, { label: "Tours", href: "/tours" }, { label: "Flights", href: "/flights" }, { label: "Restaurants", href: "/restaurants" }] },
+            { title: "Business", links: [{ label: "For Hotels", href: "#" }, { label: "For Restaurants", href: "#" }, { label: "For Agencies", href: "#" }, { label: "Pricing", href: "#" }] },
+            { title: "Company", links: [{ label: "About", href: "#" }, { label: "Contact", href: "#" }, { label: "Careers", href: "#" }, { label: "Blog", href: "#" }] },
           ].map((col) => (
             <div key={col.title}>
               <h4 className="text-xs font-semibold text-white uppercase tracking-wider mb-4">{col.title}</h4>
               <ul className="space-y-2.5">
                 {col.links.map((link) => (
-                  <li key={link}><span className="text-xs hover:text-white cursor-pointer transition-colors">{link}</span></li>
+                  <li key={link.label}><Link href={link.href} className="text-xs hover:text-white transition-colors">{link.label}</Link></li>
                 ))}
               </ul>
             </div>

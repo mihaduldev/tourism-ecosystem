@@ -197,7 +197,7 @@ export default function ReportsPage() {
                     <div className={`h-full rounded-full ${item.color}`} style={{ width: `${item.pct}%` }} />
                   </div>
                 </div>
-                <div className="w-24 text-right text-sm font-semibold text-gray-900">&#2547;{(item.revenue / 100000).toFixed(1)}L</div>
+                <div className="w-24 text-right text-sm font-semibold text-gray-900">৳{(item.revenue / 100000).toFixed(1)}L</div>
                 <div className="w-16 text-right text-xs text-gray-400">{item.tenants} tenants</div>
               </div>
             ))}

@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useDataStore } from "@/lib/state/data-store";
 import { TENANT_MODULE_MAP } from "@/lib/utils";
 import { StatCard } from "@/components/ui/stat-card";
+import { MODULE_META } from "@/lib/module-config";
 import {
   Building2, UtensilsCrossed, Waves, Map, Plane,
   Calculator, Users, Package, CalendarCheck, HeartHandshake,
@@ -33,16 +34,16 @@ type ModuleCardDef = {
 };
 
 const MODULE_DEFS: Record<string, ModuleCardDef> = {
-  hotel:      { id: "hotel",      label: "Hotel PMS",       tagline: "Rooms, reservations & guests",         color: "#2563EB", icon: Building2,        href: "/tenant/hotel" },
-  restaurant: { id: "restaurant", label: "Restaurant POS",  tagline: "POS, tables, kitchen & menu",          color: "#EA580C", icon: UtensilsCrossed,  href: "/tenant/restaurant" },
-  laundry:    { id: "laundry",    label: "Laundry",         tagline: "Orders, pickups & service pricing",    color: "#9333EA", icon: Waves,            href: "/tenant/laundry" },
-  tour:       { id: "tour",       label: "Tour Management", tagline: "Packages, bookings & guides",          color: "#16A34A", icon: Map,              href: "/tenant/tour" },
-  ticketing:  { id: "ticketing",  label: "Air Ticketing",   tagline: "Flight requests & PNR management",     color: "#7C3AED", icon: Plane,            href: "/tenant/ticketing" },
-  accounts:   { id: "accounts",   label: "Accounts",        tagline: "Financial transactions & reports",     color: "#D97706", icon: Calculator,       href: "/tenant/accounts" },
-  hr:         { id: "hr",         label: "HR & Payroll",    tagline: "Employees, attendance & leave",        color: "#0891B2", icon: Users,            href: "/tenant/hr" },
-  inventory:  { id: "inventory",  label: "Inventory",       tagline: "Stock management & purchase orders",   color: "#DC2626", icon: Package,          href: "/tenant/inventory" },
-  crm:        { id: "crm",        label: "CRM",             tagline: "Contacts, deals & sales pipeline",     color: "#475569", icon: HeartHandshake,   href: "/tenant/crm" },
-  booking:    { id: "booking",    label: "Booking Engine",  tagline: "Multi-channel reservations & widgets", color: "#2563EB", icon: CalendarCheck,    href: "/tenant/booking" },
+  hotel:      { id: "hotel",      label: "Hotel PMS",       tagline: "Rooms, reservations & guests",         color: MODULE_META.hotel.color,      icon: Building2,       href: MODULE_META.hotel.route },
+  restaurant: { id: "restaurant", label: "Restaurant POS",  tagline: "POS, tables, kitchen & menu",          color: MODULE_META.restaurant.color, icon: UtensilsCrossed, href: MODULE_META.restaurant.route },
+  laundry:    { id: "laundry",    label: "Laundry",         tagline: "Orders, pickups & service pricing",    color: MODULE_META.laundry.color,    icon: Waves,           href: MODULE_META.laundry.route },
+  tour:       { id: "tour",       label: "Tour Management", tagline: "Packages, bookings & guides",          color: MODULE_META.tour.color,       icon: Map,             href: MODULE_META.tour.route },
+  ticketing:  { id: "ticketing",  label: "Air Ticketing",   tagline: "Flight requests & PNR management",     color: MODULE_META.ticketing.color,  icon: Plane,           href: MODULE_META.ticketing.route },
+  accounts:   { id: "accounts",   label: "Accounts",        tagline: "Financial transactions & reports",     color: MODULE_META.accounts.color,   icon: Calculator,      href: MODULE_META.accounts.route },
+  hr:         { id: "hr",         label: "HR & Payroll",    tagline: "Employees, attendance & leave",        color: MODULE_META.hr.color,         icon: Users,           href: MODULE_META.hr.route },
+  inventory:  { id: "inventory",  label: "Inventory",       tagline: "Stock management & purchase orders",   color: MODULE_META.inventory.color,  icon: Package,         href: MODULE_META.inventory.route },
+  crm:        { id: "crm",        label: "CRM",             tagline: "Contacts, deals & sales pipeline",     color: MODULE_META.crm.color,        icon: HeartHandshake,  href: MODULE_META.crm.route },
+  booking:    { id: "booking",    label: "Booking Engine",  tagline: "Multi-channel reservations & widgets", color: MODULE_META.booking.color,    icon: CalendarCheck,   href: MODULE_META.booking.route },
 };
 
 // ─── Module Metric Computation ───────────────────────────────────────────

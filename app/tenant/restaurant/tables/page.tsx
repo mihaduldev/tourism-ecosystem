@@ -103,10 +103,8 @@ export default function TablesPage() {
             <div className="space-y-2 pt-3 border-t border-gray-100">
               {selectedTable.status === "Available" && (
                 <>
-                  <Link href="/tenant/restaurant/pos" onClick={() => setSelectedTable(null)}>
-                    <button className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg bg-restaurant-500 text-white hover:bg-restaurant-600 transition-colors">
-                      <ShoppingCart className="w-4 h-4" /> Start New Order
-                    </button>
+                  <Link href="/tenant/restaurant/pos" onClick={() => setSelectedTable(null)} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg bg-restaurant-500 text-white hover:bg-restaurant-600 transition-colors">
+                    <ShoppingCart className="w-4 h-4" /> Start New Order
                   </Link>
                   <button onClick={() => markReserved(selectedTable)} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
                     Reserve Table
@@ -127,10 +125,8 @@ export default function TablesPage() {
               )}
               {selectedTable.status === "Reserved" && (
                 <>
-                  <Link href="/tenant/restaurant/pos" onClick={() => setSelectedTable(null)}>
-                    <button className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg bg-restaurant-500 text-white hover:bg-restaurant-600 transition-colors">
-                      <ShoppingCart className="w-4 h-4" /> Seat & Start Order
-                    </button>
+                  <Link href="/tenant/restaurant/pos" onClick={() => setSelectedTable(null)} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg bg-restaurant-500 text-white hover:bg-restaurant-600 transition-colors">
+                    <ShoppingCart className="w-4 h-4" /> Seat & Start Order
                   </Link>
                   <button onClick={() => markAvailable(selectedTable)} className="w-full flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors">
                     Cancel Reservation

@@ -95,9 +95,7 @@ export default function HRDashboard() {
           <p className="text-sm text-gray-500">People management & workforce overview</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/tenant/hr/employees">
-            <button className="px-4 py-2 bg-hr-500 text-white rounded-lg text-sm font-medium hover:bg-hr-600">+ Add Employee</button>
-          </Link>
+          <Link href="/tenant/hr/employees" className="px-4 py-2 bg-hr-500 text-white rounded-lg text-sm font-medium hover:bg-hr-600">+ Add Employee</Link>
         </div>
       </div>
 

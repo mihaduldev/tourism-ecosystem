@@ -22,7 +22,7 @@ export default function RestaurantOverview() {
           <p className="text-sm text-gray-500">ABC Restaurant · Daily operations overview</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/tenant/restaurant/pos"><button className="px-4 py-2 bg-restaurant-500 text-white rounded-lg text-sm font-medium hover:bg-restaurant-600">Open POS Terminal</button></Link>
+          <Link href="/tenant/restaurant/pos" className="px-4 py-2 bg-restaurant-500 text-white rounded-lg text-sm font-medium hover:bg-restaurant-600">Open POS Terminal</Link>
         </div>
       </div>
 

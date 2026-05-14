@@ -19,29 +19,33 @@ export function useTheme() {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>("light");
-  const [mounted, setMounted] = useState(false);
+  // Initialize from the class already set by the FOUC prevention script
+  // so the first render matches what the browser already shows
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === "undefined") return "light";
+    return document.documentElement.classList.contains("dark") ? "dark" : "light";
+  });
 
-  // Read from localStorage on mount
   useEffect(() => {
+    // Sync state with whatever the FOUC script set (or localStorage / OS preference)
     const stored = localStorage.getItem("theme") as Theme | null;
-    const initial = stored || "light";
-    setTheme(initial);
-    document.documentElement.classList.toggle("dark", initial === "dark");
-    setMounted(true);
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const resolved: Theme = stored === "dark" || stored === "light"
+      ? stored
+      : prefersDark ? "dark" : "light";
+
+    setTheme(resolved);
+    document.documentElement.classList.toggle("dark", resolved === "dark");
   }, []);
 
   const toggle = useCallback(() => {
     setTheme(prev => {
-      const next = prev === "light" ? "dark" : "light";
+      const next: Theme = prev === "light" ? "dark" : "light";
       localStorage.setItem("theme", next);
       document.documentElement.classList.toggle("dark", next === "dark");
       return next;
     });
   }, []);
-
-  // Prevent flash of wrong theme
-  if (!mounted) return null;
 
   return (
     <ThemeContext.Provider value={{ theme, toggle }}>

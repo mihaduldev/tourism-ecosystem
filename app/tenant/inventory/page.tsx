@@ -49,9 +49,7 @@ export default function InventoryDashboard() {
           <p className="text-sm text-gray-500">Stock tracking & purchase orders</p>
         </div>
         <div className="flex gap-2">
-          <Link href="/tenant/inventory/purchase">
-            <button className="px-4 py-2 bg-inventory-500 text-white rounded-lg text-sm font-medium hover:bg-inventory-600">+ New Purchase Order</button>
-          </Link>
+          <Link href="/tenant/inventory/purchase" className="px-4 py-2 bg-inventory-500 text-white rounded-lg text-sm font-medium hover:bg-inventory-600">+ New Purchase Order</Link>
         </div>
       </div>
 

@@ -91,7 +91,7 @@ export default function HomePage() {
           {[
             { icon: Building2, label: "Hotels", count: "423 properties", bg: "#eff6ff", color: "#2563eb", border: "#bfdbfe", href: "/hotels" },
             { icon: Map, label: "Tours", count: "165 packages", bg: "#f0fdf4", color: "#16a34a", border: "#bbf7d0", href: "/tours" },
-            { icon: Plane, label: "Flights", count: "120 agents", bg: "#f5f3ff", color: "#7c3aed", border: "#ddd6fe", href: "#" },
+            { icon: Plane, label: "Flights", count: "120 agents", bg: "#f5f3ff", color: "#7c3aed", border: "#ddd6fe", href: "/flights" },
             { icon: UtensilsCrossed, label: "Restaurants", count: "341 listings", bg: "#fff7ed", color: "#ea580c", border: "#fed7aa", href: "/restaurants" },
           ].map((cat) => (
             <Link key={cat.label} href={cat.href}

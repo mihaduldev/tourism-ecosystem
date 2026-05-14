@@ -133,7 +133,7 @@ export default function FinancePage() {
                     "bg-gray-100 text-gray-600"
                   }`}>{inv.plan}</span>
                 </td>
-                <td className="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">&#2547;{inv.amount.toLocaleString()}</td>
+                <td className="px-4 py-3.5 text-right text-sm font-semibold text-gray-900">৳{inv.amount.toLocaleString()}</td>
                 <td className="px-4 py-3.5 text-sm text-gray-600">{inv.due}</td>
                 <td className="px-4 py-3.5"><StatusBadge status={inv.status} /></td>
                 <td className="px-4 py-3.5">

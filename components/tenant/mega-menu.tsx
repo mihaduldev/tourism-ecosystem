@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { TENANT_MODULE_MAP } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
+import { MODULE_META } from "@/lib/module-config";
 import {
   Building2, UtensilsCrossed, Waves, Map, Plane,
   Calculator, Users, Package, CalendarCheck, HeartHandshake,
@@ -20,7 +21,7 @@ import { useDataStore } from "@/lib/state/data-store";
 
 type IconProps = { className?: string; style?: React.CSSProperties };
 type SubItem = { label: string; href: string; icon: React.FC<IconProps> };
-type ModuleMeta = {
+type ModuleEntry = {
   label: string;
   tagline: string;
   appType: string;
@@ -29,14 +30,13 @@ type ModuleMeta = {
   icon: React.FC<IconProps>;
   items: SubItem[];
 };
-type EnrichedMod = ModuleMeta & { _id: string };
+type EnrichedMod = ModuleEntry & { _id: string };
 
-// ─── Module data ──────────────────────────────────────────────────────────────
+// ─── Module data — colors/labels come from MODULE_META ────────────────────────
 
-const MODULES: Record<string, ModuleMeta> = {
+const MODULES: Record<string, ModuleEntry> = {
   hotel: {
-    label: "Hotel PMS", tagline: "Rooms, reservations, housekeeping & billing",
-    appType: "PMS", color: "#2563EB", overviewHref: "/tenant/hotel", icon: Building2,
+    ...MODULE_META.hotel, overviewHref: MODULE_META.hotel.route, icon: Building2,
     items: [
       { label: "Rooms", href: "/tenant/hotel/rooms", icon: BedDouble },
       { label: "Availability", href: "/tenant/hotel/calendar", icon: Calendar },
@@ -49,8 +49,7 @@ const MODULES: Record<string, ModuleMeta> = {
     ],
   },
   restaurant: {
-    label: "Restaurant POS", tagline: "POS, table management, kitchen display & menu",
-    appType: "POS", color: "#EA580C", overviewHref: "/tenant/restaurant", icon: UtensilsCrossed,
+    ...MODULE_META.restaurant, overviewHref: MODULE_META.restaurant.route, icon: UtensilsCrossed,
     items: [
       { label: "POS Terminal", href: "/tenant/restaurant/pos", icon: ShoppingCart },
       { label: "Tables", href: "/tenant/restaurant/tables", icon: Table2 },
@@ -59,8 +58,7 @@ const MODULES: Record<string, ModuleMeta> = {
     ],
   },
   laundry: {
-    label: "Laundry", tagline: "Order intake, processing lifecycle & delivery",
-    appType: "OPS", color: "#9333EA", overviewHref: "/tenant/laundry", icon: Waves,
+    ...MODULE_META.laundry, overviewHref: MODULE_META.laundry.route, icon: Waves,
     items: [
       { label: "Orders", href: "/tenant/laundry/orders", icon: ClipboardList },
       { label: "Pickup Requests", href: "/tenant/laundry/pickups", icon: Truck },
@@ -68,8 +66,7 @@ const MODULES: Record<string, ModuleMeta> = {
     ],
   },
   tour: {
-    label: "Tour Management", tagline: "Packages, bookings, guide assignments & departures",
-    appType: "TOUR", color: "#16A34A", overviewHref: "/tenant/tour", icon: Map,
+    ...MODULE_META.tour, overviewHref: MODULE_META.tour.route, icon: Map,
     items: [
       { label: "Packages", href: "/tenant/tour/packages", icon: Globe },
       { label: "Bookings", href: "/tenant/tour/bookings", icon: BookOpen },
@@ -77,24 +74,21 @@ const MODULES: Record<string, ModuleMeta> = {
     ],
   },
   ticketing: {
-    label: "Air Ticketing", tagline: "Flight requests, PNR management & commissions",
-    appType: "GDS", color: "#7C3AED", overviewHref: "/tenant/ticketing", icon: Plane,
+    ...MODULE_META.ticketing, overviewHref: MODULE_META.ticketing.route, icon: Plane,
     items: [
       { label: "Flight Requests", href: "/tenant/ticketing/requests", icon: Plane },
       { label: "PNR Log", href: "/tenant/ticketing/pnr", icon: ClipboardList },
     ],
   },
   accounts: {
-    label: "Accounts", tagline: "Chart of accounts, transactions & financial reports",
-    appType: "FIN", color: "#D97706", overviewHref: "/tenant/accounts", icon: Calculator,
+    ...MODULE_META.accounts, overviewHref: MODULE_META.accounts.route, icon: Calculator,
     items: [
       { label: "Transactions", href: "/tenant/accounts/transactions", icon: ReceiptText },
       { label: "Financial Reports", href: "/tenant/accounts/reports", icon: BarChart2 },
     ],
   },
   hr: {
-    label: "HR & Payroll", tagline: "Staff records, attendance, leave & payroll",
-    appType: "HRM", color: "#0891B2", overviewHref: "/tenant/hr", icon: Users,
+    ...MODULE_META.hr, overviewHref: MODULE_META.hr.route, icon: Users,
     items: [
       { label: "Employees", href: "/tenant/hr/employees", icon: Users },
       { label: "Attendance", href: "/tenant/hr/attendance", icon: UserCheck },
@@ -102,24 +96,21 @@ const MODULES: Record<string, ModuleMeta> = {
     ],
   },
   inventory: {
-    label: "Inventory", tagline: "Stock levels, purchase orders & reorder alerts",
-    appType: "INV", color: "#DC2626", overviewHref: "/tenant/inventory", icon: Package,
+    ...MODULE_META.inventory, overviewHref: MODULE_META.inventory.route, icon: Package,
     items: [
       { label: "Stock", href: "/tenant/inventory/stock", icon: Package },
       { label: "Purchase Orders", href: "/tenant/inventory/purchase", icon: ShoppingCart },
     ],
   },
   crm: {
-    label: "CRM", tagline: "Customer profiles, deal pipeline & loyalty tiers",
-    appType: "CRM", color: "#475569", overviewHref: "/tenant/crm", icon: HeartHandshake,
+    ...MODULE_META.crm, overviewHref: MODULE_META.crm.route, icon: HeartHandshake,
     items: [
       { label: "Contacts", href: "/tenant/crm/contacts", icon: Users },
       { label: "Pipeline", href: "/tenant/crm/pipeline", icon: BarChart2 },
     ],
   },
   booking: {
-    label: "Booking Engine", tagline: "Public widget, OTA channels & availability sync",
-    appType: "BE", color: "#0EA5E9", overviewHref: "/tenant/booking", icon: CalendarCheck,
+    ...MODULE_META.booking, overviewHref: MODULE_META.booking.route, icon: CalendarCheck,
     items: [
       { label: "Channels", href: "/tenant/booking/channels", icon: Globe },
       { label: "Widget", href: "/tenant/booking/widget", icon: Settings },

@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { StatusBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,8 +16,12 @@ const bookings = [
 ];
 
 export default function MyBookingsPage() {
+  const [activeTab, setActiveTab] = useState(0);
   const upcoming = bookings.filter(b => b.status === "Confirmed");
   const past = bookings.filter(b => b.status !== "Confirmed");
+  const cancelled: typeof bookings = [];
+
+  const tabs = [`Upcoming (${upcoming.length})`, `Past (${past.length})`, "Cancelled (0)"];
 
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 md:py-10">
@@ -29,15 +36,15 @@ export default function MyBookingsPage() {
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-gray-200 mb-6">
-        {[`Upcoming (${upcoming.length})`, `Past (${past.length})`, "Cancelled (0)"].map((tab, i) => (
-          <button key={tab} className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${i === 0 ? "border-brand-500 text-brand-600" : "border-transparent text-gray-500 hover:text-gray-700"}`}>
+        {tabs.map((tab, i) => (
+          <button key={tab} onClick={() => setActiveTab(i)} className={`px-4 py-2 text-sm font-medium border-b-2 -mb-px ${i === activeTab ? "border-brand-500 text-brand-600" : "border-transparent text-gray-500 hover:text-gray-700"}`}>
             {tab}
           </button>
         ))}
       </div>
 
       {/* Upcoming */}
-      {upcoming.length > 0 && (
+      {activeTab === 0 && upcoming.length > 0 && (
         <div className="space-y-4 mb-8">
           <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Upcoming</h2>
           {upcoming.map((b) => (
@@ -73,7 +80,12 @@ export default function MyBookingsPage() {
         </div>
       )}
 
+      {activeTab === 0 && upcoming.length === 0 && (
+        <p className="py-12 text-center text-sm text-gray-400">No upcoming bookings.</p>
+      )}
+
       {/* Past */}
+      {activeTab === 1 && (
       <div className="space-y-4">
         <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">Past Bookings</h2>
         {past.map((b) => (
@@ -101,6 +113,12 @@ export default function MyBookingsPage() {
           </div>
         ))}
       </div>
+      )}
+
+      {/* Cancelled */}
+      {activeTab === 2 && (
+        <p className="py-12 text-center text-sm text-gray-400">No cancelled bookings.</p>
+      )}
     </div>
   );
 }

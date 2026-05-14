@@ -467,6 +467,7 @@ function SetupPage() {
   const [moduleData, setModuleData] = useState<Record<string, Record<string, any>>>({});
   const [currentModIdx, setCurrentModIdx] = useState(0);
   const [currentSection, setCurrentSection] = useState(0);
+  const tabScrollRef = useRef<HTMLDivElement>(null);
 
   // Team
   const [teamMembers, setTeamMembers] = useState<{ name: string; email: string; phone: string; role: UserRole }[]>([]);
@@ -918,26 +919,40 @@ function SetupPage() {
 
                       {/* Module tab strip — sticky, bleeds to edges */}
                       <div className="sticky top-0 z-10 bg-white -mx-10 px-10 py-3 border-b border-gray-100 shadow-sm">
-                        <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-                          {modulesNeedingSetup.map((m, i) => {
-                            const MIcon = MODULE_ICONS[m] ?? Package;
-                            const mc = MODULE_COLORS[m] ?? "#6b7280";
-                            const current = i === currentModIdx;
-                            const done = completedSteps.has(`cfg-${m}`);
-                            return (
-                              <button key={m} onClick={() => { setCurrentModIdx(i); setCurrentSection(0); }}
-                                className={cn("flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all border shrink-0",
-                                  current ? "text-white border-transparent shadow-sm" :
-                                  done ? "border-emerald-200 bg-emerald-50 text-emerald-700" :
-                                  "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
-                                )}
-                                style={current ? { background: mc } : {}}
-                              >
-                                {done ? <CheckCircle2 className="w-3.5 h-3.5" /> : <MIcon className="w-3.5 h-3.5" />}
-                                {MODULE_CONFIGS[m]?.label ?? m}
-                              </button>
-                            );
-                          })}
+                        <div className="relative flex items-center gap-1">
+                          <button
+                            onClick={() => tabScrollRef.current?.scrollBy({ left: -200, behavior: "smooth" })}
+                            className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 transition-all shadow-sm"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <div ref={tabScrollRef} className="flex gap-2 overflow-x-auto flex-1" style={{ scrollbarWidth: "none" }}>
+                            {modulesNeedingSetup.map((m, i) => {
+                              const MIcon = MODULE_ICONS[m] ?? Package;
+                              const mc = MODULE_COLORS[m] ?? "#6b7280";
+                              const current = i === currentModIdx;
+                              const done = completedSteps.has(`cfg-${m}`);
+                              return (
+                                <button key={m} onClick={() => { setCurrentModIdx(i); setCurrentSection(0); }}
+                                  className={cn("flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all border shrink-0",
+                                    current ? "text-white border-transparent shadow-sm" :
+                                    done ? "border-emerald-200 bg-emerald-50 text-emerald-700" :
+                                    "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
+                                  )}
+                                  style={current ? { background: mc } : {}}
+                                >
+                                  {done ? <CheckCircle2 className="w-3.5 h-3.5" /> : <MIcon className="w-3.5 h-3.5" />}
+                                  {MODULE_CONFIGS[m]?.label ?? m}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          <button
+                            onClick={() => tabScrollRef.current?.scrollBy({ left: 200, behavior: "smooth" })}
+                            className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-500 hover:text-gray-800 transition-all shadow-sm"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
 
