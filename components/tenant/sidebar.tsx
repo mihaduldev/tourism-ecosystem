@@ -18,26 +18,33 @@ import {
 
 export type TenantType = "hotel" | "restaurant" | "laundry" | "tour" | "mixed";
 
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type IconProps = { className?: string; style?: React.CSSProperties };
+
 type NavItem = {
   label: string;
   href: string;
-  icon: React.FC<{ className?: string }>;
+  icon: React.FC<IconProps>;
   badge?: (s: DataStoreState) => { count: number; bg: string } | null;
 };
+
 type ModuleNav = {
   label: string;
+  tagline: string;
+  appType: string;
   color: string;
   overviewHref: string;
-  icon: React.FC<{ className?: string }>;
+  icon: React.FC<IconProps>;
   items: NavItem[];
 };
 
+// ─── Module definitions ───────────────────────────────────────────────────────
+
 const MODULE_NAVS: Record<string, ModuleNav> = {
   hotel: {
-    label: "Hotel PMS",
-    color: "#2563EB",
-    overviewHref: "/tenant/hotel",
-    icon: Building2,
+    label: "Hotel PMS", tagline: "Rooms, reservations, housekeeping & billing",
+    appType: "PMS", color: "#2563EB", overviewHref: "/tenant/hotel", icon: Building2,
     items: [
       { label: "Rooms", href: "/tenant/hotel/rooms", icon: BedDouble },
       { label: "Availability", href: "/tenant/hotel/calendar", icon: Calendar },
@@ -50,10 +57,8 @@ const MODULE_NAVS: Record<string, ModuleNav> = {
     ],
   },
   restaurant: {
-    label: "Restaurant POS",
-    color: "#EA580C",
-    overviewHref: "/tenant/restaurant",
-    icon: UtensilsCrossed,
+    label: "Restaurant POS", tagline: "POS, tables, kitchen display & menu",
+    appType: "POS", color: "#EA580C", overviewHref: "/tenant/restaurant", icon: UtensilsCrossed,
     items: [
       { label: "POS Terminal", href: "/tenant/restaurant/pos", icon: ShoppingCart },
       { label: "Tables", href: "/tenant/restaurant/tables", icon: Table2 },
@@ -62,10 +67,8 @@ const MODULE_NAVS: Record<string, ModuleNav> = {
     ],
   },
   laundry: {
-    label: "Laundry",
-    color: "#9333EA",
-    overviewHref: "/tenant/laundry",
-    icon: Waves,
+    label: "Laundry", tagline: "Orders, pickups & service pricing",
+    appType: "OPS", color: "#9333EA", overviewHref: "/tenant/laundry", icon: Waves,
     items: [
       { label: "Orders", href: "/tenant/laundry/orders", icon: ClipboardList },
       { label: "Pickup Requests", href: "/tenant/laundry/pickups", icon: Truck },
@@ -73,10 +76,8 @@ const MODULE_NAVS: Record<string, ModuleNav> = {
     ],
   },
   tour: {
-    label: "Tour Management",
-    color: "#16A34A",
-    overviewHref: "/tenant/tour",
-    icon: Map,
+    label: "Tour Management", tagline: "Packages, bookings & guide assignments",
+    appType: "TOUR", color: "#16A34A", overviewHref: "/tenant/tour", icon: Map,
     items: [
       { label: "Packages", href: "/tenant/tour/packages", icon: Globe },
       { label: "Bookings", href: "/tenant/tour/bookings", icon: BookOpen },
@@ -84,30 +85,24 @@ const MODULE_NAVS: Record<string, ModuleNav> = {
     ],
   },
   ticketing: {
-    label: "Air Ticketing",
-    color: "#7C3AED",
-    overviewHref: "/tenant/ticketing",
-    icon: Plane,
+    label: "Air Ticketing", tagline: "Flight requests, PNR & commissions",
+    appType: "GDS", color: "#7C3AED", overviewHref: "/tenant/ticketing", icon: Plane,
     items: [
       { label: "Flight Requests", href: "/tenant/ticketing/requests", icon: Plane },
       { label: "PNR Log", href: "/tenant/ticketing/pnr", icon: ClipboardList },
     ],
   },
   accounts: {
-    label: "Accounts",
-    color: "#D97706",
-    overviewHref: "/tenant/accounts",
-    icon: Calculator,
+    label: "Accounts", tagline: "Transactions & financial reports",
+    appType: "FIN", color: "#D97706", overviewHref: "/tenant/accounts", icon: Calculator,
     items: [
       { label: "Transactions", href: "/tenant/accounts/transactions", icon: ReceiptText },
       { label: "Financial Reports", href: "/tenant/accounts/reports", icon: BarChart2 },
     ],
   },
   hr: {
-    label: "HR & Payroll",
-    color: "#0891B2",
-    overviewHref: "/tenant/hr",
-    icon: Users,
+    label: "HR & Payroll", tagline: "Staff, attendance, leave & payroll",
+    appType: "HRM", color: "#0891B2", overviewHref: "/tenant/hr", icon: Users,
     items: [
       { label: "Employees", href: "/tenant/hr/employees", icon: Users },
       { label: "Attendance", href: "/tenant/hr/attendance", icon: UserCheck },
@@ -115,30 +110,24 @@ const MODULE_NAVS: Record<string, ModuleNav> = {
     ],
   },
   inventory: {
-    label: "Inventory",
-    color: "#DC2626",
-    overviewHref: "/tenant/inventory",
-    icon: Package,
+    label: "Inventory", tagline: "Stock levels & purchase orders",
+    appType: "INV", color: "#DC2626", overviewHref: "/tenant/inventory", icon: Package,
     items: [
       { label: "Stock", href: "/tenant/inventory/stock", icon: Package, badge: (s) => { const n = s.stockItems.filter(i => i.currentStock < i.minimumStock).length; return n > 0 ? { count: n, bg: "#DC2626" } : null; } },
       { label: "Purchase Orders", href: "/tenant/inventory/purchase", icon: ShoppingCart },
     ],
   },
   crm: {
-    label: "CRM",
-    color: "#475569",
-    overviewHref: "/tenant/crm",
-    icon: HeartHandshake,
+    label: "CRM", tagline: "Contacts, deals & loyalty pipeline",
+    appType: "CRM", color: "#475569", overviewHref: "/tenant/crm", icon: HeartHandshake,
     items: [
       { label: "Contacts", href: "/tenant/crm/contacts", icon: Users },
       { label: "Pipeline", href: "/tenant/crm/pipeline", icon: BarChart2 },
     ],
   },
   booking: {
-    label: "Booking Engine",
-    color: "#0EA5E9",
-    overviewHref: "/tenant/booking",
-    icon: CalendarCheck,
+    label: "Booking Engine", tagline: "OTA channels, widget & availability sync",
+    appType: "BE", color: "#0EA5E9", overviewHref: "/tenant/booking", icon: CalendarCheck,
     items: [
       { label: "Channels", href: "/tenant/booking/channels", icon: Globe },
       { label: "Widget", href: "/tenant/booking/widget", icon: Settings },
@@ -147,50 +136,68 @@ const MODULE_NAVS: Record<string, ModuleNav> = {
   },
 };
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function getActiveModuleId(pathname: string): string | null {
   for (const [modId, mod] of Object.entries(MODULE_NAVS)) {
-    if (pathname === mod.overviewHref || pathname.startsWith(mod.overviewHref + "/")) {
-      return modId;
-    }
+    if (pathname === mod.overviewHref || pathname.startsWith(mod.overviewHref + "/")) return modId;
   }
   return null;
 }
 
-// ─── Rail Icon ───────────────────────────────────────────────────────────
+// ─── Rail icon (with appType label + badge dot) ───────────────────────────────
 
 function RailIcon({
-  icon: Icon, href, active, color, label,
+  icon: Icon, href, active, color, label, code, badgeDot,
 }: {
   icon: React.FC<{ className?: string }>;
   href: string;
   active: boolean;
   color?: string;
   label: string;
+  code?: string;
+  badgeDot?: "urgent" | "normal" | null;
 }) {
   return (
     <Link
       href={href}
       title={label}
       className={cn(
-        "w-10 h-10 rounded-xl flex items-center justify-center transition-all shrink-0",
+        "relative w-14 flex flex-col items-center gap-0.5 py-2 px-1 rounded-xl transition-all shrink-0",
         active ? "" : "hover:bg-white/10"
       )}
-      style={active ? { backgroundColor: (color || "#2563EB") + "30" } : undefined}
+      style={active ? { backgroundColor: (color || "#2563EB") + "28" } : undefined}
     >
+      {/* Badge dot */}
+      {badgeDot && (
+        <span
+          className={cn(
+            "absolute top-1.5 right-1.5 w-2 h-2 rounded-full border-2 border-slate-900",
+            badgeDot === "urgent" ? "bg-amber-400" : "bg-emerald-400"
+          )}
+        />
+      )}
       <span style={{ color: active ? (color || "#60A5FA") : "#9CA3AF" }}>
-        <Icon className="w-[20px] h-[20px]" />
+        <Icon className="w-5 h-5" />
       </span>
+      {code && (
+        <span
+          className="text-[8px] font-bold tracking-wide leading-none"
+          style={{ color: active ? (color || "#60A5FA") : "#6B7280" }}
+        >
+          {code}
+        </span>
+      )}
     </Link>
   );
 }
 
-// ─── Sidebar ─────────────────────────────────────────────────────────────
+// ─── Sidebar ──────────────────────────────────────────────────────────────────
 
 interface SidebarProps {
   tenantType: TenantType;
   collapsed: boolean;
 }
-
 
 export function TenantSidebar({ tenantType, collapsed }: SidebarProps) {
   const pathname = usePathname();
@@ -210,11 +217,29 @@ export function TenantSidebar({ tenantType, collapsed }: SidebarProps) {
     return pathname === href || pathname.startsWith(href + "/");
   }
 
+  // Compute per-module badge state for rail dots
+  function getModuleBadge(modId: string): "urgent" | "normal" | null {
+    const mod = MODULE_NAVS[modId];
+    if (!mod) return null;
+    let hasAny = false;
+    let hasUrgent = false;
+    for (const item of mod.items) {
+      const b = item.badge?.(dataState) ?? null;
+      if (b) {
+        hasAny = true;
+        if (b.bg === "#DC2626" || b.bg === "#D97706") hasUrgent = true;
+      }
+    }
+    if (hasUrgent) return "urgent";
+    if (hasAny) return "normal";
+    return null;
+  }
+
   return (
     <aside className="flex h-full shrink-0">
 
-      {/* ════════ ICON RAIL (always visible) ════════ */}
-      <div className="w-[60px] bg-slate-900 flex flex-col items-center py-3 shrink-0">
+      {/* ════════ ICON RAIL ════════ */}
+      <div className="w-[72px] bg-slate-900 flex flex-col items-center py-3 gap-0.5 shrink-0">
 
         {/* Dashboard */}
         <RailIcon
@@ -222,13 +247,13 @@ export function TenantSidebar({ tenantType, collapsed }: SidebarProps) {
           href="/tenant"
           active={pathname === "/tenant"}
           label="Dashboard"
+          code="HOME"
         />
 
-        {/* Separator */}
-        <div className="w-6 border-t border-white/10 my-2" />
+        <div className="w-8 border-t border-white/10 my-1.5" />
 
         {/* Module icons — scrollable */}
-        <div className="flex-1 flex flex-col items-center gap-1 overflow-y-auto min-h-0" style={{ scrollbarWidth: "none" }}>
+        <div className="flex-1 flex flex-col items-center gap-0.5 overflow-y-auto min-h-0 w-full px-1" style={{ scrollbarWidth: "none" }}>
           {modules.map((modId) => {
             const mod = MODULE_NAVS[modId];
             if (!mod) return null;
@@ -240,22 +265,24 @@ export function TenantSidebar({ tenantType, collapsed }: SidebarProps) {
                 active={modId === activeModuleId}
                 color={mod.color}
                 label={mod.label}
+                code={mod.appType}
+                badgeDot={getModuleBadge(modId)}
               />
             );
           })}
         </div>
 
-        {/* Separator */}
-        <div className="w-6 border-t border-white/10 my-2" />
+        <div className="w-8 border-t border-white/10 my-1.5" />
 
-        {/* Bottom: Reports, Settings, User */}
-        <div className="flex flex-col items-center gap-1">
+        {/* Bottom utilities */}
+        <div className="flex flex-col items-center gap-0.5 w-full px-1">
           {showReports && (
             <RailIcon
               icon={BarChart2}
               href="/tenant/reports"
               active={pathname.startsWith("/tenant/reports")}
               label="Reports"
+              code="RPT"
             />
           )}
           {showSettings && (
@@ -264,58 +291,67 @@ export function TenantSidebar({ tenantType, collapsed }: SidebarProps) {
               href="/tenant/settings"
               active={pathname.startsWith("/tenant/settings")}
               label="Settings"
+              code="SET"
             />
           )}
         </div>
       </div>
 
-      {/* ════════ CONTEXT PANEL (hidden when collapsed) ════════ */}
+      {/* ════════ CONTEXT PANEL ════════ */}
       {!collapsed && (
-        <div className="w-[200px] bg-white border-r border-gray-200 flex flex-col overflow-hidden">
+        <div className="w-[240px] bg-white border-r border-gray-200 flex flex-col overflow-hidden">
 
           {activeModule ? (
-            /* ── Module-specific navigation ── */
             <>
-              {/* Module header */}
-              <div className="px-4 pt-4 pb-3 border-b border-gray-100 shrink-0">
-                <div className="flex items-center gap-2.5">
-                  <div
-                    className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: activeModule.color + "14" }}
-                  >
-                    <span style={{ color: activeModule.color }}>
-                      <activeModule.icon className="w-3.5 h-3.5" />
+              {/* ── Module header ── */}
+              <div
+                className="h-14 px-4 flex items-center gap-3 border-b border-gray-200 shrink-0"
+                style={{ borderLeftWidth: 3, borderLeftColor: activeModule.color, borderLeftStyle: "solid" }}
+              >
+                <div
+                  className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ backgroundColor: activeModule.color + "14" }}
+                >
+                  <activeModule.icon className="w-4 h-4" style={{ color: activeModule.color }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="text-xs font-bold text-gray-900 truncate leading-tight">{activeModule.label}</h3>
+                    <span className="text-[8px] font-mono font-bold px-1 py-0.5 rounded shrink-0"
+                      style={{ backgroundColor: activeModule.color + "14", color: activeModule.color }}>
+                      {activeModule.appType}
                     </span>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-gray-900 leading-tight">{activeModule.label}</h3>
-                  </div>
+                  <p className="text-[10px] text-gray-400 truncate mt-0.5">{activeModule.tagline}</p>
                 </div>
               </div>
 
-              {/* Nav links */}
+              {/* ── Nav links ── */}
               <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
-                {/* Overview link */}
+                {/* Overview */}
                 <Link
                   href={activeModule.overviewHref}
                   className={cn(
-                    "flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                    "flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-xs font-medium transition-colors",
                     pathname === activeModule.overviewHref
-                      ? "bg-gray-100 text-gray-900 font-semibold"
+                      ? "text-gray-900"
                       : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                   )}
+                  style={pathname === activeModule.overviewHref ? { backgroundColor: activeModule.color + "0D" } : undefined}
                 >
-                  <span style={pathname === activeModule.overviewHref ? { color: activeModule.color } : undefined}>
-                    <LayoutDashboard className="w-3.5 h-3.5" />
-                  </span>
-                  Overview
+                  <div
+                    className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: pathname === activeModule.overviewHref ? activeModule.color + "18" : "#F3F4F6" }}
+                  >
+                    <LayoutDashboard className="w-3.5 h-3.5" style={{ color: pathname === activeModule.overviewHref ? activeModule.color : "#9CA3AF" }} />
+                  </div>
+                  <span className="flex-1">Overview</span>
                   {pathname === activeModule.overviewHref && (
-                    <span className="ml-auto w-1.5 h-1.5 rounded-full" style={{ backgroundColor: activeModule.color }} />
+                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: activeModule.color }} />
                   )}
                 </Link>
 
-                {/* Divider */}
-                <div className="mx-3 my-1 border-t border-gray-100" />
+                <div className="mx-2 my-1 border-t border-gray-100" />
 
                 {/* Sub-pages */}
                 {activeModule.items.map((item) => {
@@ -326,15 +362,19 @@ export function TenantSidebar({ tenantType, collapsed }: SidebarProps) {
                       key={item.href}
                       href={item.href}
                       className={cn(
-                        "flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                        "flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-xs font-medium transition-colors",
                         active
-                          ? "bg-gray-100 text-gray-900 font-semibold"
+                          ? "text-gray-900"
                           : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
                       )}
+                      style={active ? { backgroundColor: activeModule.color + "0D" } : undefined}
                     >
-                      <span style={active ? { color: activeModule.color } : undefined}>
-                        <item.icon className="w-3.5 h-3.5" />
-                      </span>
+                      <div
+                        className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                        style={{ backgroundColor: active ? activeModule.color + "18" : "#F3F4F6" }}
+                      >
+                        <item.icon className="w-3.5 h-3.5" style={{ color: active ? activeModule.color : "#9CA3AF" }} />
+                      </div>
                       <span className="flex-1">{item.label}</span>
                       {badge ? (
                         <span
@@ -351,13 +391,13 @@ export function TenantSidebar({ tenantType, collapsed }: SidebarProps) {
                 })}
               </nav>
             </>
-
           ) : (
-            /* ── Home / Module picker ── */
             <>
-              <div className="px-4 pt-4 pb-3 border-b border-gray-100 shrink-0">
-                <h3 className="text-sm font-semibold text-gray-900">Navigation</h3>
-                <p className="text-[11px] text-gray-400 mt-0.5">Select a module to explore</p>
+              {/* ── Home state: workspace overview ── */}
+              <div className="h-14 px-4 flex flex-col justify-center border-b border-gray-200 shrink-0">
+                <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-indigo-400/80">Workspace</p>
+                <h3 className="text-sm font-bold text-gray-900 leading-tight">All Modules</h3>
+                <p className="text-[10px] text-gray-400">{modules.length} modules available</p>
               </div>
 
               <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
@@ -373,11 +413,14 @@ export function TenantSidebar({ tenantType, collapsed }: SidebarProps) {
                     <Link
                       key={modId}
                       href={mod.overviewHref}
-                      className="flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs text-gray-600 hover:bg-gray-50 hover:text-gray-900 group transition-colors"
+                      className="flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-xs text-gray-500 hover:bg-gray-50 hover:text-gray-900 group transition-colors"
                     >
-                      <span style={{ color: mod.color }}>
-                        <mod.icon className="w-4 h-4" />
-                      </span>
+                      <div
+                        className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 transition-colors"
+                        style={{ backgroundColor: "#F3F4F6" }}
+                      >
+                        <mod.icon className="w-3.5 h-3.5" style={{ color: mod.color }} />
+                      </div>
                       <span className="flex-1 font-medium">{mod.label}</span>
                       {totalBadge ? (
                         <span
@@ -396,15 +439,15 @@ export function TenantSidebar({ tenantType, collapsed }: SidebarProps) {
             </>
           )}
 
-          {/* ── User card (pinned bottom) ── */}
+          {/* ── User card ── */}
           <div className="px-3 py-3 border-t border-gray-100 shrink-0 bg-white">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-[10px] font-bold shrink-0">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-brand-100 flex items-center justify-center text-brand-700 text-[11px] font-bold shrink-0">
                 {auth.currentUser.avatar}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium text-gray-900 truncate">{auth.currentUser.name}</p>
-                <span className={`text-[9px] font-medium px-1 py-0.5 rounded ${ROLE_COLORS[auth.currentUser.role]}`}>
+                <p className="text-xs font-semibold text-gray-900 truncate leading-tight">{auth.currentUser.name}</p>
+                <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-md ${ROLE_COLORS[auth.currentUser.role]}`}>
                   {ROLE_LABELS[auth.currentUser.role]}
                 </span>
               </div>

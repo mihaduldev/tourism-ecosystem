@@ -454,6 +454,11 @@ function TenantShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Setup wizard is full-screen — bypass the shell chrome entirely
+  if (pathname.startsWith("/tenant/setup")) {
+    return <>{children}</>;
+  }
+
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [showTenantPicker, setShowTenantPicker] = useState(false);
@@ -498,7 +503,7 @@ function TenantShell({ children }: { children: React.ReactNode }) {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Topbar */}
-        <header className="h-14 bg-white border-b border-gray-200 flex items-center px-4 gap-3 shrink-0 z-20">
+        <header className="h-14 bg-white border-b border-gray-200 flex items-center px-4 gap-3 shrink-0 z-20 relative">
           <button className="md:hidden p-1.5 rounded-md hover:bg-gray-100" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
