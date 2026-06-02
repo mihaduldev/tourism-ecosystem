@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { useDataStore } from "@/lib/state/data-store";
 import type { DataStoreState } from "@/lib/state/types";
 import { ROLE_LABELS, ROLE_COLORS } from "@/lib/auth-types";
-import { MODULE_META } from "@/lib/module-config";
+import { MODULE_META, isSharedModule } from "@/lib/module-config";
 import {
   LayoutDashboard, Building2, UtensilsCrossed, Waves, Map, Plane,
   Calculator, Users, Package, CalendarCheck, HeartHandshake,
@@ -188,9 +188,10 @@ function RailIcon({
 interface SidebarProps {
   tenantType: TenantType;
   collapsed: boolean;
+  hideRail?: boolean;
 }
 
-export function TenantSidebar({ tenantType, collapsed }: SidebarProps) {
+export function TenantSidebar({ tenantType, collapsed, hideRail }: SidebarProps) {
   const pathname = usePathname();
   const auth = useAuth();
   const { state: dataState } = useDataStore();
@@ -230,7 +231,7 @@ export function TenantSidebar({ tenantType, collapsed }: SidebarProps) {
     <aside className="flex h-full shrink-0">
 
       {/* ════════ ICON RAIL ════════ */}
-      <div className="w-[72px] bg-slate-900 flex flex-col items-center py-3 gap-0.5 shrink-0">
+      {!hideRail && <div className="w-[72px] bg-slate-900 flex flex-col items-center py-3 gap-0.5 shrink-0">
 
         {/* Dashboard */}
         <RailIcon
@@ -243,9 +244,36 @@ export function TenantSidebar({ tenantType, collapsed }: SidebarProps) {
 
         <div className="w-8 border-t border-white/10 my-1.5" />
 
-        {/* Module icons — scrollable */}
+        {/* Module icons — scrollable, split into core & shared */}
         <div className="flex-1 flex flex-col items-center gap-0.5 overflow-y-auto min-h-0 w-full px-1" style={{ scrollbarWidth: "none" }}>
-          {modules.map((modId) => {
+          {/* Core modules */}
+          {modules.filter(m => !isSharedModule(m)).map((modId) => {
+            const mod = MODULE_NAVS[modId];
+            if (!mod) return null;
+            return (
+              <RailIcon
+                key={modId}
+                icon={mod.icon}
+                href={mod.overviewHref}
+                active={modId === activeModuleId}
+                color={mod.color}
+                label={mod.label}
+                code={mod.appType}
+                badgeDot={getModuleBadge(modId)}
+              />
+            );
+          })}
+
+          {/* Shared modules separator */}
+          {modules.some(m => isSharedModule(m)) && (
+            <>
+              <div className="w-8 border-t border-white/10 my-1.5" />
+              <span className="text-[7px] font-bold uppercase tracking-widest text-white/30 mb-0.5">Shared</span>
+            </>
+          )}
+
+          {/* Shared modules */}
+          {modules.filter(m => isSharedModule(m)).map((modId) => {
             const mod = MODULE_NAVS[modId];
             if (!mod) return null;
             return (
@@ -286,7 +314,7 @@ export function TenantSidebar({ tenantType, collapsed }: SidebarProps) {
             />
           )}
         </div>
-      </div>
+      </div>}
 
       {/* ════════ CONTEXT PANEL ════════ */}
       {!collapsed && (
@@ -392,7 +420,49 @@ export function TenantSidebar({ tenantType, collapsed }: SidebarProps) {
               </div>
 
               <nav className="flex-1 overflow-y-auto p-2 space-y-0.5">
-                {modules.map((modId) => {
+                {/* Core modules */}
+                {modules.filter(m => !isSharedModule(m)).map((modId) => {
+                  const mod = MODULE_NAVS[modId];
+                  if (!mod) return null;
+                  const totalBadge = mod.items.reduce<{ count: number; bg: string } | null>((acc, item) => {
+                    const b = item.badge?.(dataState) ?? null;
+                    if (!b) return acc;
+                    return { count: (acc?.count ?? 0) + b.count, bg: b.bg };
+                  }, null);
+                  return (
+                    <Link
+                      key={modId}
+                      href={mod.overviewHref}
+                      className="flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-xs text-gray-500 hover:bg-gray-50 hover:text-gray-900 group transition-colors"
+                    >
+                      <div
+                        className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0 transition-colors"
+                        style={{ backgroundColor: "#F3F4F6" }}
+                      >
+                        <mod.icon className="w-3.5 h-3.5" style={{ color: mod.color }} />
+                      </div>
+                      <span className="flex-1 font-medium">{mod.label}</span>
+                      {totalBadge ? (
+                        <span
+                          className="text-[9px] font-bold min-w-[18px] h-[16px] px-1 rounded-full text-white flex items-center justify-center shrink-0"
+                          style={{ backgroundColor: totalBadge.bg }}
+                        >
+                          {totalBadge.count}
+                        </span>
+                      ) : (
+                        <ArrowRight className="w-3 h-3 text-gray-300 group-hover:text-gray-500 transition-colors" />
+                      )}
+                    </Link>
+                  );
+                })}
+
+                {/* Shared modules */}
+                {modules.some(m => isSharedModule(m)) && (
+                  <div className="px-2.5 pt-3 pb-1">
+                    <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-gray-400">Shared Services</p>
+                  </div>
+                )}
+                {modules.filter(m => isSharedModule(m)).map((modId) => {
                   const mod = MODULE_NAVS[modId];
                   if (!mod) return null;
                   const totalBadge = mod.items.reduce<{ count: number; bg: string } | null>((acc, item) => {

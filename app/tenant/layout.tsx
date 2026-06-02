@@ -12,7 +12,7 @@ import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DESCRIPTIONS, TENANT_USERS, type TenantType } from "@/lib/auth-types";
 import Link from "next/link";
-import { Bell, Search, Plus, ChevronDown, Menu, X, GitBranch, Shield, Lock, ExternalLink, Users, Clock, CheckCircle, AlertTriangle, Info, Settings, Rocket, LayoutGrid, Moon, Sun, Building2, UtensilsCrossed, Waves, Map, Plane, Calculator, Package, CalendarCheck, HeartHandshake, ChevronRight } from "lucide-react";
+import { Bell, Search, Plus, ChevronDown, Menu, X, Shield, Lock, Users, Clock, CheckCircle, AlertTriangle, Info, Settings, Rocket, LayoutGrid, Moon, Sun, Building2, UtensilsCrossed, Waves, Map, Plane, Calculator, Package, CalendarCheck, HeartHandshake, ChevronRight } from "lucide-react";
 import { MegaMenu } from "@/components/tenant/mega-menu";
 import { ThemeProvider, useTheme } from "@/components/providers/theme-provider";
 import { MODULE_META, ROUTE_TO_MODULE } from "@/lib/module-config";
@@ -464,6 +464,7 @@ function TenantShell({ children }: { children: React.ReactNode }) {
 
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [sidebarVisible, setSidebarVisible] = useState(true);
   const [showTenantPicker, setShowTenantPicker] = useState(false);
   const [showUserPicker, setShowUserPicker] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
@@ -498,7 +499,7 @@ function TenantShell({ children }: { children: React.ReactNode }) {
       {mobileOpen && <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setMobileOpen(false)} />}
 
       <div className="hidden md:flex">
-        <TenantSidebar tenantType={tenantType} collapsed={collapsed} />
+        <TenantSidebar tenantType={tenantType} collapsed={collapsed} hideRail={!sidebarVisible} />
       </div>
       <div className={`fixed inset-y-0 left-0 z-40 md:hidden transition-transform duration-200 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
         <TenantSidebar tenantType={tenantType} collapsed={false} />
@@ -507,12 +508,16 @@ function TenantShell({ children }: { children: React.ReactNode }) {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Topbar */}
         <header className="h-14 bg-white border-b border-gray-200 flex items-center px-4 gap-3 shrink-0 z-20 relative">
+          {/* Mobile: hamburger for sidebar drawer */}
           <button className="md:hidden p-1.5 rounded-md hover:bg-gray-100" onClick={() => setMobileOpen(!mobileOpen)}>
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
-          <button className="hidden md:flex p-1.5 rounded-md hover:bg-gray-100 text-gray-400" onClick={() => setCollapsed(!collapsed)}>
-            <Menu className="w-4.5 h-4.5" />
-          </button>
+          {/* Desktop: collapse/expand sidebar context panel */}
+          {sidebarVisible && (
+            <button className="hidden md:flex p-1.5 rounded-md hover:bg-gray-100 text-gray-400" onClick={() => setCollapsed(!collapsed)}>
+              <Menu className="w-4.5 h-4.5" />
+            </button>
+          )}
 
           {/* Business switcher */}
           <div className="relative">
@@ -540,36 +545,6 @@ function TenantShell({ children }: { children: React.ReactNode }) {
             )}
           </div>
 
-          <div className="hidden sm:flex items-center gap-1 px-2 py-1 bg-gray-100 rounded-lg text-xs text-gray-500">
-            <GitBranch className="w-3 h-3" /><span>Main Branch</span>
-          </div>
-
-          {/* Mega menu trigger */}
-          <button
-            onClick={() => { setShowMegaMenu(!showMegaMenu); setShowTenantPicker(false); setShowUserPicker(false); setShowNotifications(false); }}
-            className={cn(
-              "hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors border",
-              showMegaMenu
-                ? "bg-brand-50 text-brand-600 border-brand-200"
-                : "text-gray-600 hover:bg-gray-100 border-gray-200"
-            )}
-          >
-            <LayoutGrid className="w-3.5 h-3.5" />
-            <span>Modules</span>
-          </button>
-
-          {/* Public page & Customer portal links */}
-          <div className="hidden md:flex items-center gap-1.5">
-            <Link href={`/book/${currentTenant.bookSlug}`} target="_blank"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-100 border border-gray-200 transition-colors">
-              <ExternalLink className="w-3.5 h-3.5" /><span className="hidden lg:inline">Public Page</span>
-            </Link>
-            <Link href={`/book/${currentTenant.bookSlug}/account`} target="_blank"
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-100 border border-gray-200 transition-colors">
-              <Users className="w-3.5 h-3.5" /><span className="hidden lg:inline">Customer Portal</span>
-            </Link>
-          </div>
-
           <div className="ml-auto flex items-center gap-2">
             <button
               onClick={() => setShowSearch(true)}
@@ -583,9 +558,13 @@ function TenantShell({ children }: { children: React.ReactNode }) {
             >
               <Plus className="w-3.5 h-3.5" /><span className="hidden sm:block">{contextualAction}</span>
             </button>
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
+
             <div className="relative">
               <button
-                onClick={() => { setShowNotifications(!showNotifications); setShowTenantPicker(false); setShowUserPicker(false); }}
+                onClick={() => { setShowNotifications(!showNotifications); setShowTenantPicker(false); setShowUserPicker(false); setShowMegaMenu(false); }}
                 className="relative p-2 rounded-md hover:bg-gray-100 text-gray-500"
               >
                 <Bell className="w-4.5 h-4.5" /><span className="absolute top-1.5 right-1.5 w-2 h-2 bg-danger-500 rounded-full" />
@@ -593,8 +572,31 @@ function TenantShell({ children }: { children: React.ReactNode }) {
               <NotificationPanel open={showNotifications} onClose={() => setShowNotifications(false)} />
             </div>
 
-            {/* Theme Toggle */}
-            <ThemeToggle />
+
+            {/* App launcher */}
+            <div className="relative">
+              <button
+                className={cn(
+                  "p-2 rounded-lg transition-colors",
+                  showMegaMenu ? "bg-brand-50 text-brand-600" : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                )}
+                title="Apps"
+                onClick={() => {
+                  setShowMegaMenu(!showMegaMenu);
+                  setShowTenantPicker(false);
+                  setShowUserPicker(false);
+                  setShowNotifications(false);
+                }}
+              >
+                <LayoutGrid className="w-4.5 h-4.5" />
+              </button>
+              <MegaMenu
+                open={showMegaMenu}
+                onClose={() => setShowMegaMenu(false)}
+                showRail={sidebarVisible}
+                onToggleRail={() => setSidebarVisible(prev => !prev)}
+              />
+            </div>
 
             {/* User Picker — shows current role and lets you switch */}
             <div className="relative">
@@ -699,7 +701,6 @@ function TenantShell({ children }: { children: React.ReactNode }) {
       {/* Modals & overlays — rendered outside topbar flow */}
       <SearchModal open={showSearch} onClose={() => setShowSearch(false)} />
       <QuickActionModal open={showQuickAction} onClose={() => setShowQuickAction(false)} tenantType={tenantType} />
-      <MegaMenu open={showMegaMenu} onClose={() => setShowMegaMenu(false)} />
     </div>
   );
 }

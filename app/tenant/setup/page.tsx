@@ -46,6 +46,8 @@ const MODULE_NAME_SUGGESTIONS: Record<string, { name: string; tagline: string }>
 };
 
 const CUSTOMER_FACING_MODULES = new Set(["hotel", "restaurant", "laundry", "tour", "ticketing"]);
+const SHARED_MODULES = new Set(["accounts", "hr", "booking"]);
+const STANDALONE_MODULES = new Set(["inventory", "crm"]);
 
 // ─── Team roles for hospitality ───────────────────────────────────────────────
 
@@ -463,6 +465,24 @@ function SetupPage() {
   const [enabledModules, setEnabledModules] = useState<Set<string>>(new Set(availableModules));
   const modulesNeedingSetup = availableModules.filter(m => enabledModules.has(m) && MODULE_SETUP_CONFIGS[m]);
 
+  // Shared module bindings — maps each core module to its connected shared modules
+  const [sharedBindings, setSharedBindings] = useState<Record<string, Set<string>>>(() => {
+    const init: Record<string, Set<string>> = {};
+    const enabledShared = availableModules.filter(m => SHARED_MODULES.has(m));
+    for (const core of availableModules.filter(m => CUSTOMER_FACING_MODULES.has(m))) {
+      init[core] = new Set(enabledShared);
+    }
+    return init;
+  });
+
+  function toggleSharedBinding(coreId: string, sharedId: string) {
+    setSharedBindings(prev => {
+      const s = new Set(prev[coreId] ?? []);
+      if (s.has(sharedId)) s.delete(sharedId); else s.add(sharedId);
+      return { ...prev, [coreId]: s };
+    });
+  }
+
   // Module config
   const [moduleData, setModuleData] = useState<Record<string, Record<string, any>>>({});
   const [currentModIdx, setCurrentModIdx] = useState(0);
@@ -834,12 +854,48 @@ function SetupPage() {
                   </div>
                 </div>
 
-                {/* Category: Back-office */}
-                {availableModules.some(m => !CUSTOMER_FACING_MODULES.has(m)) && (
+                {/* Category: Shared Services */}
+                {availableModules.some(m => SHARED_MODULES.has(m)) && (
                   <div>
-                    <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-gray-400 mb-3">Back-office & support</p>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-gray-400 mb-3">Shared Services</p>
+                    <p className="text-xs text-gray-500 mb-3">These modules work across all your core modules — finance, staffing, and reservations.</p>
                     <div className="space-y-2">
-                      {availableModules.filter(m => !CUSTOMER_FACING_MODULES.has(m)).map(mod => {
+                      {availableModules.filter(m => SHARED_MODULES.has(m)).map(mod => {
+                        const Icon = MODULE_ICONS[mod] ?? Package;
+                        const color = MODULE_COLORS[mod] ?? "#6b7280";
+                        const isOn = enabledModules.has(mod);
+                        return (
+                          <button key={mod} onClick={() => setEnabledModules(prev => { const n = new Set(prev); if (n.has(mod)) n.delete(mod); else n.add(mod); return n; })}
+                            className={cn("w-full text-left bg-white rounded-2xl border-2 p-4 transition-all hover:shadow-sm", isOn ? "shadow-sm" : "opacity-55 hover:opacity-70")}
+                            style={{ borderColor: isOn ? `${color}35` : "#e5e7eb" }}>
+                            <div className="flex items-center gap-4">
+                              <div className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${color}10` }}>
+                                <Icon className="w-5 h-5" style={{ color }} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <p className="text-sm font-bold text-gray-900">{MODULE_CONFIGS[mod]?.label ?? mod}</p>
+                                  <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-100">Shared</span>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-0.5 truncate">{MODULE_SETUP_CONFIGS[mod]?.description ?? MODULE_CONFIGS[mod]?.label}</p>
+                              </div>
+                              <div className="w-11 h-6 rounded-full flex items-center px-0.5 transition-all shrink-0" style={{ background: isOn ? color : "#d1d5db" }}>
+                                <div className="w-5 h-5 bg-white rounded-full shadow-sm transition-transform" style={{ transform: isOn ? "translateX(20px)" : "translateX(0)" }} />
+                              </div>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Category: Standalone (inventory, crm) */}
+                {availableModules.some(m => STANDALONE_MODULES.has(m)) && (
+                  <div>
+                    <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-gray-400 mb-3">Other modules</p>
+                    <div className="space-y-2">
+                      {availableModules.filter(m => STANDALONE_MODULES.has(m)).map(mod => {
                         const Icon = MODULE_ICONS[mod] ?? Package;
                         const color = MODULE_COLORS[mod] ?? "#6b7280";
                         const isOn = enabledModules.has(mod);
@@ -856,7 +912,7 @@ function SetupPage() {
                                   <p className="text-sm font-bold text-gray-900">{MODULE_CONFIGS[mod]?.label ?? mod}</p>
                                   <span className="text-[8px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 border border-gray-200">Internal</span>
                                 </div>
-                                <p className="text-xs text-gray-500 mt-0.5 truncate">{MODULE_SETUP_CONFIGS[mod]?.description}</p>
+                                <p className="text-xs text-gray-500 mt-0.5 truncate">{MODULE_SETUP_CONFIGS[mod]?.description ?? MODULE_CONFIGS[mod]?.label}</p>
                               </div>
                               <div className="w-11 h-6 rounded-full flex items-center px-0.5 transition-all shrink-0" style={{ background: isOn ? color : "#d1d5db" }}>
                                 <div className="w-5 h-5 bg-white rounded-full shadow-sm transition-transform" style={{ transform: isOn ? "translateX(20px)" : "translateX(0)" }} />
@@ -868,6 +924,58 @@ function SetupPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Shared module bindings — connect shared services to core modules */}
+                {(() => {
+                  const enabledCore = availableModules.filter(m => CUSTOMER_FACING_MODULES.has(m) && enabledModules.has(m));
+                  const enabledShared = availableModules.filter(m => SHARED_MODULES.has(m) && enabledModules.has(m));
+                  if (enabledCore.length === 0 || enabledShared.length === 0) return null;
+                  return (
+                    <div>
+                      <p className="text-[9px] font-bold uppercase tracking-[0.12em] text-gray-400 mb-1">Connect shared services</p>
+                      <p className="text-xs text-gray-500 mb-3">Choose which shared modules each core module uses. One core module can have multiple shared services.</p>
+                      <div className="space-y-3">
+                        {enabledCore.map(coreId => {
+                          const cIcon = MODULE_ICONS[coreId] ?? Package;
+                          const CIcon = cIcon;
+                          const cColor = MODULE_COLORS[coreId] ?? "#6b7280";
+                          return (
+                            <div key={coreId} className="bg-white rounded-xl border border-gray-200 p-4">
+                              <div className="flex items-center gap-3 mb-3">
+                                <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: `${cColor}10` }}>
+                                  <CIcon className="w-4 h-4" style={{ color: cColor }} />
+                                </div>
+                                <p className="text-sm font-bold text-gray-900">{MODULE_CONFIGS[coreId]?.label ?? coreId}</p>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {enabledShared.map(sharedId => {
+                                  const sIcon = MODULE_ICONS[sharedId] ?? Package;
+                                  const SIcon = sIcon;
+                                  const sColor = MODULE_COLORS[sharedId] ?? "#6b7280";
+                                  const bound = sharedBindings[coreId]?.has(sharedId) ?? false;
+                                  return (
+                                    <button
+                                      key={sharedId}
+                                      onClick={() => toggleSharedBinding(coreId, sharedId)}
+                                      className={cn(
+                                        "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
+                                        bound ? "text-white shadow-sm" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                                      )}
+                                      style={bound ? { backgroundColor: sColor, borderColor: sColor } : undefined}
+                                    >
+                                      <SIcon className="w-3.5 h-3.5" />
+                                      {MODULE_CONFIGS[sharedId]?.label ?? sharedId}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Summary */}
                 <div className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 border border-gray-200">

@@ -1,10 +1,16 @@
+"use client";
+
+import { useState } from "react";
 import { accountsStats, recentTransactions, monthlyPL } from "@/lib/demo-data";
 import { StatCard } from "@/components/ui/stat-card";
 import { PLChart } from "@/components/ui/charts";
 import { StatusBadge } from "@/components/ui/badge";
+import { ModuleFilter } from "@/components/tenant/module-filter";
 import { Banknote, Landmark, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight, Download } from "lucide-react";
 
 export default function AccountsPage() {
+  const [filterModule, setFilterModule] = useState("all");
+
   return (
     <div className="max-w-7xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
@@ -16,6 +22,9 @@ export default function AccountsPage() {
           <Download className="w-4 h-4" /> Export
         </button>
       </div>
+
+      {/* Module filter */}
+      <ModuleFilter selected={filterModule} onChange={setFilterModule} />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

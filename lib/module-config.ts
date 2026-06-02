@@ -133,6 +133,24 @@ export const CUSTOMER_FACING_MODULES = new Set<ModuleId>([
   "hotel", "restaurant", "laundry", "tour", "ticketing",
 ]);
 
+/**
+ * Shared (cross-cutting) modules — these serve all core modules
+ * and aggregate data across them. They appear separately in menus
+ * and include per-module filtering.
+ */
+export const SHARED_MODULE_IDS: ModuleId[] = ["accounts", "hr", "booking"];
+
+/** Core (operational) modules — primary business functions */
+export const CORE_MODULE_IDS: ModuleId[] = ["hotel", "restaurant", "laundry", "tour", "ticketing"];
+
+/** Standalone modules — neither core nor shared */
+export const STANDALONE_MODULE_IDS: ModuleId[] = ["inventory", "crm"];
+
+/** Check if a module is shared */
+export function isSharedModule(id: string): boolean {
+  return SHARED_MODULE_IDS.includes(id as ModuleId);
+}
+
 /** Map from route prefix → module id */
 export const ROUTE_TO_MODULE: Record<string, ModuleId> = Object.fromEntries(
   ALL_MODULE_IDS.map(id => [MODULE_META[id].route, id])

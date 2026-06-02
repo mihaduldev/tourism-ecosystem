@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { StatCard } from "@/components/ui/stat-card";
 import { StatusBadge } from "@/components/ui/badge";
+import { ModuleFilter } from "@/components/tenant/module-filter";
 import { useDataStore } from "@/lib/state/data-store";
 import { useToast } from "@/lib/state/toast-context";
 import {
@@ -14,6 +15,7 @@ import {
 export default function HRDashboard() {
   const { state, updateItem } = useDataStore();
   const { addToast } = useToast();
+  const [filterModule, setFilterModule] = useState("all");
   const employees = state.employees;
   const leaveRequests = state.leaveRequests;
   const attendanceRecords = state.attendanceRecords;
@@ -98,6 +100,9 @@ export default function HRDashboard() {
           <Link href="/tenant/hr/employees" className="px-4 py-2 bg-hr-500 text-white rounded-lg text-sm font-medium hover:bg-hr-600">+ Add Employee</Link>
         </div>
       </div>
+
+      {/* Module filter */}
+      <ModuleFilter selected={filterModule} onChange={setFilterModule} />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

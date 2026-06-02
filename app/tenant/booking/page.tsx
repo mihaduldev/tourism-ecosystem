@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { StatCard } from "@/components/ui/stat-card";
+import { ModuleFilter } from "@/components/tenant/module-filter";
 import {
   CalendarCheck, Globe, Settings, Calendar,
   LayoutDashboard, TrendingUp, ArrowRight, Users,
@@ -32,6 +33,8 @@ const statusColors: Record<string, string> = {
 };
 
 export default function BookingOverviewPage() {
+  const [filterModule, setFilterModule] = useState("all");
+
   return (
     <div className="max-w-7xl mx-auto space-y-5">
       {/* Header */}
@@ -46,6 +49,9 @@ export default function BookingOverviewPage() {
           </Link>
         </div>
       </div>
+
+      {/* Module filter */}
+      <ModuleFilter selected={filterModule} onChange={setFilterModule} />
 
       {/* KPIs */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
